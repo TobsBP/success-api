@@ -3,6 +3,7 @@ import helmet from "@fastify/helmet";
 import Fastify from "fastify";
 import { env } from "./core/config/env.js";
 import { setupContainer } from "./core/di/container.js";
+import { closeRedis } from "./infra/cache/client.js";
 import { closeDb } from "./infra/db/client.js";
 import errorHandlerPlugin from "./infra/plugins/error-handler.plugin.js";
 import firebaseAuthPlugin from "./infra/plugins/firebase-auth.plugin.js";
@@ -44,6 +45,7 @@ for (const signal of signals) {
 		try {
 			await fastify.close();
 			await closeDb();
+			await closeRedis();
 			await Sentry.close(2000);
 			fastify.log.info("Server closed successfully.");
 			process.exit(0);

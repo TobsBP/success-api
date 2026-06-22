@@ -108,19 +108,36 @@ export class ${capitalizedName}Repository implements I${capitalizedName}Reposito
 
 // 4. Service
 const serviceContent = `import { NotFoundError } from "../../../core/errors/index.js";
+import type { CacheService } from "../../../infra/cache/cache.service.js";
 import type { I${capitalizedName}Repository } from "../interfaces/${moduleName}.repository.interface.js";
 import type { I${capitalizedName}Service } from "../interfaces/${moduleName}.service.interface.js";
 import type { Create${singularCapitalized}Body, ${singularCapitalized}Dto } from "../schemas/index.js";
 
+const CACHE_TTL_SECONDS = 60;
+const cacheKey = (id: string) => \`${singularName}:\${id}\`;
+
 export class ${capitalizedName}Service implements I${capitalizedName}Service {
     private repo: I${capitalizedName}Repository;
-    constructor({ ${moduleName}Repository }: { ${moduleName}Repository: I${capitalizedName}Repository }) {
+    private cache: CacheService;
+    constructor({
+        ${moduleName}Repository,
+        cache,
+    }: {
+        ${moduleName}Repository: I${capitalizedName}Repository;
+        cache: CacheService;
+    }) {
         this.repo = ${moduleName}Repository;
+        this.cache = cache;
     }
 
     async getById(id: string): Promise<${singularCapitalized}Dto> {
+        const cached = await this.cache.get<${singularCapitalized}Dto>(cacheKey(id));
+        if (cached) return cached;
+
         const item = await this.repo.findById(id);
         if (!item) throw new NotFoundError("${singularCapitalized}", id);
+
+        await this.cache.set(cacheKey(id), item, CACHE_TTL_SECONDS);
         return item;
     }
 
@@ -196,6 +213,7 @@ export async function ${moduleName}Routes(fastify: FastifyInstance) {
 const serviceTestContent = `import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import { ${capitalizedName}Service } from "./${moduleName}.service.js";
 import type { I${capitalizedName}Repository } from "../interfaces/${moduleName}.repository.interface.js";
+import type { CacheService } from "../../../infra/cache/cache.service.js";
 import { NotFoundError } from "../../../core/errors/index.js";
 
 describe("${capitalizedName}Service", () => {
@@ -204,19 +222,40 @@ describe("${capitalizedName}Service", () => {
         findById: Mock;
         create: Mock;
     };
+    let mockCache: {
+        get: Mock;
+        set: Mock;
+        del: Mock;
+    };
 
     beforeEach(() => {
         mockRepo = {
             findById: vi.fn(),
             create: vi.fn(),
         };
-        service = new ${capitalizedName}Service({ ${moduleName}Repository: mockRepo as unknown as I${capitalizedName}Repository });
+        mockCache = {
+            get: vi.fn().mockResolvedValue(null),
+            set: vi.fn(),
+            del: vi.fn(),
+        };
+        service = new ${capitalizedName}Service({
+            ${moduleName}Repository: mockRepo as unknown as I${capitalizedName}Repository,
+            cache: mockCache as unknown as CacheService,
+        });
     });
 
-    it("should find an item by id", async () => {
+    it("should find an item by id and cache it on a miss", async () => {
         const item = { id: "123", name: "Test" };
         mockRepo.findById.mockResolvedValue(item);
         await expect(service.getById("123")).resolves.toEqual(item);
+        expect(mockCache.set).toHaveBeenCalled();
+    });
+
+    it("should return the cached item without hitting the repository", async () => {
+        const item = { id: "123", name: "Test" };
+        mockCache.get.mockResolvedValue(item);
+        await expect(service.getById("123")).resolves.toEqual(item);
+        expect(mockRepo.findById).not.toHaveBeenCalled();
     });
 
     it("should throw NotFoundError if item is not found", async () => {
