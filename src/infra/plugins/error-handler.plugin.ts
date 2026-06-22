@@ -1,6 +1,7 @@
 import type { FastifyError } from "fastify";
 import fp from "fastify-plugin";
 import { AppError } from "../../core/errors/index.js";
+import { Sentry } from "../sentry.js";
 
 interface ValidationDetail {
 	keyword: string;
@@ -36,6 +37,7 @@ export default fp(async (fastify) => {
 			});
 		}
 
+		Sentry.captureException(error);
 		fastify.log.error(error);
 		return reply.status(500).send({
 			statusCode: 500,

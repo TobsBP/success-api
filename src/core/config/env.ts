@@ -15,6 +15,7 @@ const envSchema = Type.Object({
 	),
 	PORT: Type.Number({ default: 3000 }),
 	DATABASE_URL: Type.String(),
+	SENTRY_DSN: Type.Optional(Type.String()),
 	// Adicione outras variáveis conforme o projeto crescer
 });
 

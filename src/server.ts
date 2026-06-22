@@ -5,6 +5,7 @@ import { env } from "./core/config/env.js";
 import { setupContainer } from "./core/di/container.js";
 import { closeDb } from "./infra/db/client.js";
 import errorHandlerPlugin from "./infra/plugins/error-handler.plugin.js";
+import { initSentry, Sentry } from "./infra/sentry.js";
 import firebaseAuthPlugin from "./infra/plugins/firebase-auth.plugin.js";
 import swaggerPlugin from "./infra/plugins/swagger.plugin.js";
 import { appModules } from "./modules/index.js";
@@ -15,6 +16,7 @@ const fastify = Fastify({
 });
 
 async function bootstrap() {
+	initSentry();
 	setupContainer();
 	await fastify.register(cors, {
 		origin: true,
@@ -42,6 +44,7 @@ for (const signal of signals) {
 		try {
 			await fastify.close();
 			await closeDb();
+			await Sentry.close(2000);
 			fastify.log.info("Server closed successfully.");
 			process.exit(0);
 		} catch (err) {
