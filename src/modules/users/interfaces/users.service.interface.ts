@@ -1,9 +1,9 @@
-import type { User } from "../../../infra/db/schema/users.js";
+import type { User } from "@/infra/db/schema/users.js";
 import type {
 	CreateUserBody,
 	ListUsersQuery,
 	UpdateUserBody,
-} from "../schemas/index.js";
+} from "@/modules/users/schemas/index.js";
 
 export interface IUsersService {
 	list(query: ListUsersQuery): Promise<{

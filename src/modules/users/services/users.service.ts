@@ -1,13 +1,13 @@
-import { NotFoundError } from "../../../core/errors/index.js";
-import type { CacheService } from "../../../infra/cache/cache.service.js";
-import type { User } from "../../../infra/db/schema/users.js";
-import type { IUsersRepository } from "../interfaces/users.repository.interface.js";
-import type { IUsersService } from "../interfaces/users.service.interface.js";
+import { NotFoundError } from "@/core/errors/index.js";
+import type { CacheService } from "@/infra/cache/cache.service.js";
+import type { User } from "@/infra/db/schema/users.js";
+import type { IUsersRepository } from "@/modules/users/interfaces/users.repository.interface.js";
+import type { IUsersService } from "@/modules/users/interfaces/users.service.interface.js";
 import type {
 	CreateUserBody,
 	ListUsersQuery,
 	UpdateUserBody,
-} from "../schemas/index.js";
+} from "@/modules/users/schemas/index.js";
 
 const CACHE_TTL_SECONDS = 60;
 const cacheKey = (id: string) => `user:${id}`;

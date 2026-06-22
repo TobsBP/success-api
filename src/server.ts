@@ -1,5 +1,6 @@
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
+import rateLimit from "@fastify/rate-limit";
 import Fastify from "fastify";
 import { env } from "./core/config/env.js";
 import { setupContainer } from "./core/di/container.js";
@@ -7,6 +8,7 @@ import { closeRedis } from "./infra/cache/client.js";
 import { closeDb } from "./infra/db/client.js";
 import errorHandlerPlugin from "./infra/plugins/error-handler.plugin.js";
 import firebaseAuthPlugin from "./infra/plugins/firebase-auth.plugin.js";
+import healthPlugin from "./infra/plugins/health.plugin.js";
 import swaggerPlugin from "./infra/plugins/swagger.plugin.js";
 import { initSentry, Sentry } from "./infra/sentry.js";
 import { appModules } from "./modules/index.js";
@@ -26,9 +28,14 @@ async function bootstrap() {
 	await fastify.register(helmet, {
 		contentSecurityPolicy: false,
 	});
+	await fastify.register(rateLimit, {
+		max: env.RATE_LIMIT_MAX,
+		timeWindow: env.RATE_LIMIT_WINDOW,
+	});
 
 	await fastify.register(swaggerPlugin);
 	await fastify.register(errorHandlerPlugin);
+	await fastify.register(healthPlugin);
 	await fastify.register(firebaseAuthPlugin);
 
 	await fastify.register(appModules);
@@ -55,6 +62,19 @@ for (const signal of signals) {
 		}
 	});
 }
+
+// Erros não capturados: reporta ao Sentry, loga e encerra (estado indefinido)
+process.on("uncaughtException", (err) => {
+	Sentry.captureException(err);
+	fastify.log.fatal(err, "Uncaught exception");
+	Sentry.close(2000).finally(() => process.exit(1));
+});
+
+process.on("unhandledRejection", (reason) => {
+	Sentry.captureException(reason);
+	fastify.log.fatal(reason, "Unhandled promise rejection");
+	Sentry.close(2000).finally(() => process.exit(1));
+});
 
 bootstrap().catch((err) => {
 	fastify.log.error(err);

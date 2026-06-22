@@ -8,8 +8,8 @@ import {
 	type Mock,
 	vi,
 } from "vitest";
-import { UsersController } from "../controllers/users.controller.js";
-import type { IUsersService } from "../interfaces/users.service.interface.js";
+import { UsersController } from "@/modules/users/controllers/users.controller.js";
+import type { IUsersService } from "@/modules/users/interfaces/users.service.interface.js";
 
 describe("Users Routes Integration", () => {
 	let fastify: FastifyInstance;

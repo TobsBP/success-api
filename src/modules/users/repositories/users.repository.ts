@@ -1,9 +1,12 @@
 import { count, eq } from "drizzle-orm";
-import { ConflictError } from "../../../core/errors/index.js";
-import type { Db } from "../../../infra/db/client.js";
-import { users } from "../../../infra/db/schema/index.js";
-import type { IUsersRepository } from "../interfaces/users.repository.interface.js";
-import type { CreateUserBody, UpdateUserBody } from "../schemas/index.js";
+import { ConflictError } from "@/core/errors/index.js";
+import type { Db } from "@/infra/db/client.js";
+import { users } from "@/infra/db/schema/index.js";
+import type { IUsersRepository } from "@/modules/users/interfaces/users.repository.interface.js";
+import type {
+	CreateUserBody,
+	UpdateUserBody,
+} from "@/modules/users/schemas/index.js";
 
 export class UsersRepository implements IUsersRepository {
 	private db: Db;

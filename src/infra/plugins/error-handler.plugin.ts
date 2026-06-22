@@ -1,7 +1,7 @@
 import type { FastifyError } from "fastify";
 import fp from "fastify-plugin";
-import { AppError } from "../../core/errors/index.js";
-import { Sentry } from "../sentry.js";
+import { AppError } from "@/core/errors/index.js";
+import { Sentry } from "@/infra/sentry.js";
 
 interface ValidationDetail {
 	keyword: string;

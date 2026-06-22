@@ -1,5 +1,8 @@
-import type { User } from "../../../infra/db/schema/users.js";
-import type { CreateUserBody, UpdateUserBody } from "../schemas/index.js";
+import type { User } from "@/infra/db/schema/users.js";
+import type {
+	CreateUserBody,
+	UpdateUserBody,
+} from "@/modules/users/schemas/index.js";
 
 export interface IUsersRepository {
 	findAll(

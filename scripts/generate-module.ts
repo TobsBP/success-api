@@ -37,7 +37,7 @@ if (!fs.existsSync(baseDir)) {
 
 // 1. Schema
 const schemaContent = `import { Type, Static } from "@sinclair/typebox";
-import { UuidSchema, PaginationQuerySchema, PaginatedResponse } from "../../../shared/schemas/common.js";
+import { UuidSchema, PaginationQuerySchema, PaginatedResponse } from "@/shared/schemas/common.js";
 
 export const ${singularCapitalized}Schema = Type.Object({
     id: UuidSchema,
@@ -67,7 +67,7 @@ export type List${capitalizedName}Query = Static<typeof List${capitalizedName}Qu
 `;
 
 // 2. Interfaces
-const repoInterfaceContent = `import type { Create${singularCapitalized}Body, ${singularCapitalized}Dto } from "../schemas/index.js";
+const repoInterfaceContent = `import type { Create${singularCapitalized}Body, ${singularCapitalized}Dto } from "@/modules/${moduleName}/schemas/index.js";
 
 export interface I${capitalizedName}Repository {
     findById(id: string): Promise<${singularCapitalized}Dto | null>;
@@ -75,7 +75,7 @@ export interface I${capitalizedName}Repository {
 }
 `;
 
-const serviceInterfaceContent = `import type { Create${singularCapitalized}Body, ${singularCapitalized}Dto } from "../schemas/index.js";
+const serviceInterfaceContent = `import type { Create${singularCapitalized}Body, ${singularCapitalized}Dto } from "@/modules/${moduleName}/schemas/index.js";
 
 export interface I${capitalizedName}Service {
     getById(id: string): Promise<${singularCapitalized}Dto>;
@@ -84,9 +84,9 @@ export interface I${capitalizedName}Service {
 `;
 
 // 3. Repository
-const repoContent = `import type { Db } from "../../../infra/db/client.js";
-import type { Create${singularCapitalized}Body, ${singularCapitalized}Dto } from "../schemas/index.js";
-import type { I${capitalizedName}Repository } from "../interfaces/${moduleName}.repository.interface.js";
+const repoContent = `import type { Db } from "@/infra/db/client.js";
+import type { Create${singularCapitalized}Body, ${singularCapitalized}Dto } from "@/modules/${moduleName}/schemas/index.js";
+import type { I${capitalizedName}Repository } from "@/modules/${moduleName}/interfaces/${moduleName}.repository.interface.js";
 
 export class ${capitalizedName}Repository implements I${capitalizedName}Repository {
     private db: Db;
@@ -107,11 +107,11 @@ export class ${capitalizedName}Repository implements I${capitalizedName}Reposito
 `;
 
 // 4. Service
-const serviceContent = `import { NotFoundError } from "../../../core/errors/index.js";
-import type { CacheService } from "../../../infra/cache/cache.service.js";
-import type { I${capitalizedName}Repository } from "../interfaces/${moduleName}.repository.interface.js";
-import type { I${capitalizedName}Service } from "../interfaces/${moduleName}.service.interface.js";
-import type { Create${singularCapitalized}Body, ${singularCapitalized}Dto } from "../schemas/index.js";
+const serviceContent = `import { NotFoundError } from "@/core/errors/index.js";
+import type { CacheService } from "@/infra/cache/cache.service.js";
+import type { I${capitalizedName}Repository } from "@/modules/${moduleName}/interfaces/${moduleName}.repository.interface.js";
+import type { I${capitalizedName}Service } from "@/modules/${moduleName}/interfaces/${moduleName}.service.interface.js";
+import type { Create${singularCapitalized}Body, ${singularCapitalized}Dto } from "@/modules/${moduleName}/schemas/index.js";
 
 const CACHE_TTL_SECONDS = 60;
 const cacheKey = (id: string) => \`${singularName}:\${id}\`;
@@ -149,8 +149,8 @@ export class ${capitalizedName}Service implements I${capitalizedName}Service {
 
 // 5. Controller
 const controllerContent = `import type { FastifyRequest, FastifyReply } from "fastify";
-import type { I${capitalizedName}Service } from "../interfaces/${moduleName}.service.interface.js";
-import type { Create${singularCapitalized}Body, ${singularCapitalized}Params } from "../schemas/index.js";
+import type { I${capitalizedName}Service } from "@/modules/${moduleName}/interfaces/${moduleName}.service.interface.js";
+import type { Create${singularCapitalized}Body, ${singularCapitalized}Params } from "@/modules/${moduleName}/schemas/index.js";
 
 export class ${capitalizedName}Controller {
     private service: I${capitalizedName}Service;
@@ -172,13 +172,13 @@ export class ${capitalizedName}Controller {
 
 // 6. Routes
 const routesContent = `import type { FastifyInstance } from "fastify";
-import { container } from "../../../core/di/container.js";
-import type { ${capitalizedName}Controller } from "../controllers/${moduleName}.controller.js";
+import { container } from "@/core/di/container.js";
+import type { ${capitalizedName}Controller } from "@/modules/${moduleName}/controllers/${moduleName}.controller.js";
 import {
     ${singularCapitalized}Schema,
     Create${singularCapitalized}BodySchema,
     ${singularCapitalized}ParamsSchema,
-} from "../schemas/index.js";
+} from "@/modules/${moduleName}/schemas/index.js";
 
 export async function ${moduleName}Routes(fastify: FastifyInstance) {
     const controller = container.resolve<${capitalizedName}Controller>("${moduleName}Controller");
@@ -212,9 +212,9 @@ export async function ${moduleName}Routes(fastify: FastifyInstance) {
 // 7. Tests
 const serviceTestContent = `import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import { ${capitalizedName}Service } from "./${moduleName}.service.js";
-import type { I${capitalizedName}Repository } from "../interfaces/${moduleName}.repository.interface.js";
-import type { CacheService } from "../../../infra/cache/cache.service.js";
-import { NotFoundError } from "../../../core/errors/index.js";
+import type { I${capitalizedName}Repository } from "@/modules/${moduleName}/interfaces/${moduleName}.repository.interface.js";
+import type { CacheService } from "@/infra/cache/cache.service.js";
+import { NotFoundError } from "@/core/errors/index.js";
 
 describe("${capitalizedName}Service", () => {
     let service: ${capitalizedName}Service;
@@ -267,8 +267,8 @@ describe("${capitalizedName}Service", () => {
 
 const routesTestContent = `import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from "vitest";
 import Fastify, { type FastifyInstance } from "fastify";
-import { ${capitalizedName}Controller } from "../controllers/${moduleName}.controller.js";
-import type { I${capitalizedName}Service } from "../interfaces/${moduleName}.service.interface.js";
+import { ${capitalizedName}Controller } from "@/modules/${moduleName}/controllers/${moduleName}.controller.js";
+import type { I${capitalizedName}Service } from "@/modules/${moduleName}/interfaces/${moduleName}.service.interface.js";
 
 describe("${capitalizedName} Routes", () => {
     let fastify: FastifyInstance;
@@ -369,9 +369,9 @@ const containerPath = path.join(
 if (fs.existsSync(containerPath)) {
 	let containerContent = fs.readFileSync(containerPath, "utf-8");
 
-	const repoImport = `import { ${capitalizedName}Repository } from "../../modules/${moduleName}/repositories/${moduleName}.repository.js";`;
-	const serviceImport = `import { ${capitalizedName}Service } from "../../modules/${moduleName}/services/${moduleName}.service.js";`;
-	const controllerImport = `import { ${capitalizedName}Controller } from "../../modules/${moduleName}/controllers/${moduleName}.controller.js";`;
+	const repoImport = `import { ${capitalizedName}Repository } from "@/modules/${moduleName}/repositories/${moduleName}.repository.js";`;
+	const serviceImport = `import { ${capitalizedName}Service } from "@/modules/${moduleName}/services/${moduleName}.service.js";`;
+	const controllerImport = `import { ${capitalizedName}Controller } from "@/modules/${moduleName}/controllers/${moduleName}.controller.js";`;
 
 	if (!containerContent.includes(repoImport)) {
 		containerContent = `${repoImport}\n${serviceImport}\n${controllerImport}\n${containerContent}`;

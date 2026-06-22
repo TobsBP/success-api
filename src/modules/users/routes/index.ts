@@ -1,7 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import { container } from "../../../core/di/container.js";
-import { ErrorResponseSchema } from "../../../shared/schemas/common.js";
-import type { UsersController } from "../controllers/users.controller.js";
+import { container } from "@/core/di/container.js";
+import type { UsersController } from "@/modules/users/controllers/users.controller.js";
 import {
 	CreateUserBodySchema,
 	ListUsersQuerySchema,
@@ -9,7 +8,8 @@ import {
 	UpdateUserBodySchema,
 	UserParamsSchema,
 	UserSchema,
-} from "../schemas/index.js";
+} from "@/modules/users/schemas/index.js";
+import { ErrorResponseSchema } from "@/shared/schemas/common.js";
 
 export async function usersRoutes(fastify: FastifyInstance) {
 	const controller = container.resolve<UsersController>("usersController");

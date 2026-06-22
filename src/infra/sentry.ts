@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/node";
-import { env } from "../core/config/env.js";
+import { env } from "@/core/config/env.js";
 
 /**
  * Inicializa o Sentry. Só é ativado quando `SENTRY_DSN` está definido,

@@ -17,6 +17,13 @@ const envSchema = Type.Object({
 	DATABASE_URL: Type.String(),
 	SENTRY_DSN: Type.Optional(Type.String()),
 	REDIS_URL: Type.Optional(Type.String()),
+	// Firebase Admin (auth) — obrigatórias, validadas no startup
+	FIREBASE_PROJECT_ID: Type.String(),
+	FIREBASE_CLIENT_EMAIL: Type.String(),
+	FIREBASE_PRIVATE_KEY: Type.String(),
+	// Rate limit global
+	RATE_LIMIT_MAX: Type.Number({ default: 50 }),
+	RATE_LIMIT_WINDOW: Type.String({ default: "1 minute" }),
 	// Adicione outras variáveis conforme o projeto crescer
 });
 
@@ -27,6 +34,9 @@ function validateEnv(): Env {
 		const envWithDefaults = {
 			...process.env,
 			PORT: process.env.PORT ? Number(process.env.PORT) : 3000,
+			RATE_LIMIT_MAX: process.env.RATE_LIMIT_MAX
+				? Number(process.env.RATE_LIMIT_MAX)
+				: 50,
 		};
 
 		const validated = Value.Cast(envSchema, envWithDefaults);

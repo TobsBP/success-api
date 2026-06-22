@@ -1,5 +1,5 @@
 import { Redis } from "ioredis";
-import { env } from "../../core/config/env.js";
+import { env } from "@/core/config/env.js";
 
 let redis: Redis | null = null;
 

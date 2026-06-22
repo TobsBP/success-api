@@ -1,11 +1,11 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
-import type { IUsersService } from "../interfaces/users.service.interface.js";
+import type { IUsersService } from "@/modules/users/interfaces/users.service.interface.js";
 import type {
 	CreateUserBody,
 	ListUsersQuery,
 	UpdateUserBody,
 	UserParams,
-} from "../schemas/index.js";
+} from "@/modules/users/schemas/index.js";
 
 export class UsersController {
 	private service: IUsersService;
