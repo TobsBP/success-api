@@ -5,9 +5,9 @@ import { env } from "./core/config/env.js";
 import { setupContainer } from "./core/di/container.js";
 import { closeDb } from "./infra/db/client.js";
 import errorHandlerPlugin from "./infra/plugins/error-handler.plugin.js";
-import { initSentry, Sentry } from "./infra/sentry.js";
 import firebaseAuthPlugin from "./infra/plugins/firebase-auth.plugin.js";
 import swaggerPlugin from "./infra/plugins/swagger.plugin.js";
+import { initSentry, Sentry } from "./infra/sentry.js";
 import { appModules } from "./modules/index.js";
 
 const fastify = Fastify({
