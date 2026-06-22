@@ -9,7 +9,6 @@ export const UserSchema = Type.Object({
 	id: UuidSchema,
 	email: Type.String({ format: "email" }),
 	name: Type.String(),
-	companyId: Type.Union([UuidSchema, Type.Null()]),
 	createdAt: Type.String({ format: "date-time" }),
 	updatedAt: Type.String({ format: "date-time" }),
 });

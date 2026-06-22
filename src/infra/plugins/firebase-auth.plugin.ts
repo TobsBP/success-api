@@ -1,11 +1,7 @@
 import { eq } from "drizzle-orm";
 import fp from "fastify-plugin";
 import admin from "firebase-admin";
-import {
-	ForbiddenError,
-	NotFoundError,
-	UnauthorizedError,
-} from "../../core/errors/index.js";
+import { NotFoundError, UnauthorizedError } from "../../core/errors/index.js";
 import { getDb } from "../db/client.js";
 import { users } from "../db/schema/index.js";
 
@@ -15,11 +11,9 @@ declare module "fastify" {
 			id: string;
 			email: string;
 			name: string;
-			companyId: string | null;
 		};
 	}
 	interface FastifyContextConfig {
-		tenancy?: boolean;
 		isPublic?: boolean;
 	}
 }
@@ -83,15 +77,6 @@ export default fp(async (fastify) => {
 			throw new NotFoundError("User", decoded.email);
 		}
 
-		const requiresTenancy = request.routeOptions?.config?.tenancy !== false;
-		if (requiresTenancy) {
-			const companyId = request.headers["x-company-id"] as string;
-			if (!companyId) {
-				throw new ForbiddenError("Missing x-company-id header");
-			}
-			request.authUser = { ...user, companyId };
-		} else {
-			request.authUser = { ...user, companyId: user.companyId ?? null };
-		}
+		request.authUser = user;
 	});
 });
