@@ -16,7 +16,10 @@ const fastify = Fastify({
 
 async function bootstrap() {
 	setupContainer();
-	await fastify.register(cors, { origin: true });
+	await fastify.register(cors, {
+		origin: true,
+		methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+	});
 	await fastify.register(helmet, {
 		contentSecurityPolicy: false,
 	});
