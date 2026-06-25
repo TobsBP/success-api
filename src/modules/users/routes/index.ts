@@ -15,10 +15,10 @@ export async function usersRoutes(fastify: FastifyInstance) {
 	const controller = container.resolve<UsersController>("usersController");
 
 	fastify.get(
-		"/",
+		"",
 		{
 			schema: {
-				tags: ["Users"],
+				tags: ["users"],
 				summary: "List users",
 				querystring: ListUsersQuerySchema,
 				response: { 200: PaginatedUsersSchema },
@@ -31,7 +31,7 @@ export async function usersRoutes(fastify: FastifyInstance) {
 		"/:id",
 		{
 			schema: {
-				tags: ["Users"],
+				tags: ["users"],
 				summary: "Get user by ID",
 				params: UserParamsSchema,
 				response: {
@@ -44,10 +44,10 @@ export async function usersRoutes(fastify: FastifyInstance) {
 	);
 
 	fastify.post(
-		"/",
+		"",
 		{
 			schema: {
-				tags: ["Users"],
+				tags: ["users"],
 				summary: "Create user",
 				body: CreateUserBodySchema,
 				response: {
@@ -63,7 +63,7 @@ export async function usersRoutes(fastify: FastifyInstance) {
 		"/:id",
 		{
 			schema: {
-				tags: ["Users"],
+				tags: ["users"],
 				summary: "Update user",
 				params: UserParamsSchema,
 				body: UpdateUserBodySchema,
@@ -80,7 +80,7 @@ export async function usersRoutes(fastify: FastifyInstance) {
 		"/:id",
 		{
 			schema: {
-				tags: ["Users"],
+				tags: ["users"],
 				summary: "Delete user",
 				params: UserParamsSchema,
 				response: {

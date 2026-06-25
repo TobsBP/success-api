@@ -21,6 +21,8 @@ const envSchema = Type.Object({
 	FIREBASE_PROJECT_ID: Type.String(),
 	FIREBASE_CLIENT_EMAIL: Type.String(),
 	FIREBASE_PRIVATE_KEY: Type.String(),
+	// Firebase REST API key (usada no login via identitytoolkit)
+	FIREBASE_API_KEY: Type.String(),
 	// Rate limit global
 	RATE_LIMIT_MAX: Type.Number({ default: 50 }),
 	RATE_LIMIT_WINDOW: Type.String({ default: "1 minute" }),

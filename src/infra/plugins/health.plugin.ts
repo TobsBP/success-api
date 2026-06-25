@@ -14,7 +14,7 @@ export default fp(async (fastify) => {
 		{
 			config: { isPublic: true },
 			schema: {
-				tags: ["Health"],
+				tags: ["health"],
 				summary: "Liveness probe",
 			},
 		},
@@ -26,7 +26,7 @@ export default fp(async (fastify) => {
 		{
 			config: { isPublic: true },
 			schema: {
-				tags: ["Health"],
+				tags: ["health"],
 				summary: "Readiness probe",
 			},
 		},

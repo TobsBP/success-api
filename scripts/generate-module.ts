@@ -62,11 +62,16 @@ const existingTables: Array<{ tableName: string; file: string }> = [];
 if (fs.existsSync(schemaDir)) {
 	const schemaFiles = fs
 		.readdirSync(schemaDir)
-		.filter((f) => f.endsWith(".ts") && f !== "index.ts" && f !== `${moduleName}.ts`);
+		.filter(
+			(f) => f.endsWith(".ts") && f !== "index.ts" && f !== `${moduleName}.ts`,
+		);
 	for (const file of schemaFiles) {
 		const content = fs.readFileSync(path.join(schemaDir, file), "utf-8");
 		for (const match of content.matchAll(/export const (\w+) = pgTable\(/g)) {
-			existingTables.push({ tableName: match[1], file: file.replace(".ts", "") });
+			existingTables.push({
+				tableName: match[1],
+				file: file.replace(".ts", ""),
+			});
 		}
 	}
 }
@@ -75,7 +80,8 @@ console.log(`\n🚀 Gerando módulo: ${moduleName}`);
 console.log(
 	"ℹ️  Os campos id, createdAt e updatedAt são adicionados automaticamente.",
 );
-console.log("ℹ️  Digite o nome do campo ou pressione Enter vazio para finalizar.\n",
+console.log(
+	"ℹ️  Digite o nome do campo ou pressione Enter vazio para finalizar.\n",
 );
 
 const fields: Field[] = [];
@@ -609,9 +615,7 @@ const drizzleSchemaDir = path.join(
 );
 const drizzleSchemaFile = path.join(drizzleSchemaDir, `${moduleName}.ts`);
 fs.writeFileSync(drizzleSchemaFile, drizzleSchemaContent);
-console.log(
-	`🗄️  Schema Drizzle criado em src/infra/db/schema/${moduleName}.ts`,
-);
+console.log(`🗄️  Schema Drizzle criado em src/infra/db/schema/${moduleName}.ts`);
 
 const drizzleIndexPath = path.join(drizzleSchemaDir, "index.ts");
 if (fs.existsSync(drizzleIndexPath)) {

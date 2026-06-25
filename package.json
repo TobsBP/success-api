@@ -12,7 +12,7 @@
 		"start": "node dist/server.js",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
-		"lint": "biome check --write .",
+		"lint": "npx @biomejs/biome check --write",
 		"generate:module": "tsx scripts/generate-module.ts",
 		"test": "vitest run",
 		"test:watch": "vitest",
