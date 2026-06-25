@@ -51,5 +51,9 @@
 	},
 	"lint-staged": {
 		"src/**/*.ts": "biome check --write"
+	},
+	"allowScripts": {
+		"esbuild@0.18.20": true,
+		"@firebase/util@1.15.1": true
 	}
 }
