@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { NotFoundError } from "@/core/errors/index.js";
-import type { CacheService } from "@/infra/cache/cache.service.js";
 import type { IInvestmentsRepository } from "@/modules/investments/interfaces/investments.repository.interface.js";
 import type { AssetDto } from "@/modules/investments/schemas/index.js";
 import { InvestmentsService } from "./investments.service.js";
@@ -26,11 +25,6 @@ describe("InvestmentsService", () => {
 		update: Mock;
 		remove: Mock;
 	};
-	let mockCache: {
-		get: Mock;
-		set: Mock;
-		del: Mock;
-	};
 
 	beforeEach(() => {
 		mockRepo = {
@@ -40,14 +34,8 @@ describe("InvestmentsService", () => {
 			update: vi.fn(),
 			remove: vi.fn(),
 		};
-		mockCache = {
-			get: vi.fn().mockResolvedValue(null),
-			set: vi.fn(),
-			del: vi.fn(),
-		};
 		service = new InvestmentsService({
 			investmentsRepository: mockRepo as unknown as IInvestmentsRepository,
-			cache: mockCache as unknown as CacheService,
 		});
 	});
 

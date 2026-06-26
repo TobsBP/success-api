@@ -1,5 +1,4 @@
 import { NotFoundError } from "@/core/errors/index.js";
-import type { CacheService } from "@/infra/cache/cache.service.js";
 import type { IExpensesRepository } from "@/modules/expenses/interfaces/expenses.repository.interface.js";
 import type { IExpensesService } from "@/modules/expenses/interfaces/expenses.service.interface.js";
 import type {
@@ -16,17 +15,11 @@ function getCurrentMonth(): string {
 
 export class ExpensesService implements IExpensesService {
 	private repo: IExpensesRepository;
-	private cache: CacheService;
 
 	constructor({
 		expensesRepository,
-		cache,
-	}: {
-		expensesRepository: IExpensesRepository;
-		cache: CacheService;
-	}) {
+	}: { expensesRepository: IExpensesRepository }) {
 		this.repo = expensesRepository;
-		this.cache = cache;
 	}
 
 	async getMonthData(

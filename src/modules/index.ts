@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { authRoutes } from "./auth/routes/index.js";
+import { categoriesRoutes } from "./categories/routes/index.js";
 import { expensesRoutes } from "./expenses/routes/index.js";
 import { goalsRoutes } from "./goals/routes/index.js";
 import { incomeRoutes } from "./income/routes/index.js";
@@ -27,4 +28,5 @@ export async function appModules(fastify: FastifyInstance) {
 	await fastify.register(reportsRoutes, { prefix: "/reports" });
 	await fastify.register(projectionsRoutes, { prefix: "/projections" });
 	await fastify.register(settingsRoutes, { prefix: "/settings" });
+	await fastify.register(categoriesRoutes, { prefix: "/categories" });
 }

@@ -100,13 +100,14 @@ describe("ProjectionsService", () => {
 			const result = await service.getProjections("user-1", 2);
 			const basePoints = result.scenarios.find(
 				(s) => s.type === "base",
-			)!.points;
+			)?.points;
 
+			expect(basePoints).toBeDefined();
 			// Ano 1: 0 * 1.1 + 0 * 12 = 0
-			expect(basePoints[0].label).toBe("Hoje");
-			expect(basePoints[0].value).toBe(0);
-			expect(basePoints[1].label).toBe("Ano 1");
-			expect(basePoints[2].label).toBe("Ano 2");
+			expect(basePoints?.[0].label).toBe("Hoje");
+			expect(basePoints?.[0].value).toBe(0);
+			expect(basePoints?.[1].label).toBe("Ano 1");
+			expect(basePoints?.[2].label).toBe("Ano 2");
 			expect(basePoints).toHaveLength(3); // Hoje + 2 anos
 		});
 

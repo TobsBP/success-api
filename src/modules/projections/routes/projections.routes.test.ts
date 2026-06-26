@@ -55,7 +55,11 @@ describe("Projections Routes", () => {
 
 		// Simula authUser no request
 		fastify.addHook("onRequest", async (request) => {
-			(request as any).authUser = { id: "user-1", email: "user@example.com" };
+			request.authUser = {
+				id: "user-1",
+				name: "User",
+				email: "user@example.com",
+			};
 		});
 
 		fastify.get("/projections", controller.getProjections);

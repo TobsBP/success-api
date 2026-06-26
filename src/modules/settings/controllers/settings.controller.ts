@@ -16,9 +16,10 @@ export class SettingsController {
 	}
 
 	getSettings = async (request: FastifyRequest, reply: FastifyReply) => {
-		const userId = (request as any).authUser?.id as string;
-		const email = (request as any).authUser?.email as string;
-		const result = await this.service.getSettings(userId, email);
+		const result = await this.service.getSettings(
+			request.authUser.id,
+			request.authUser.email,
+		);
 		return reply.send(result);
 	};
 
@@ -26,7 +27,7 @@ export class SettingsController {
 		request: FastifyRequest<{ Body: UpdateProfileBody }>,
 		reply: FastifyReply,
 	) => {
-		const userId = (request as any).authUser?.id as string;
+		const userId = request.authUser.id;
 		await this.service.updateProfile(userId, request.body);
 		return reply.status(204).send();
 	};
@@ -35,7 +36,7 @@ export class SettingsController {
 		request: FastifyRequest<{ Body: UpdatePreferencesBody }>,
 		reply: FastifyReply,
 	) => {
-		const userId = (request as any).authUser?.id as string;
+		const userId = request.authUser.id;
 		await this.service.updatePreferences(userId, request.body);
 		return reply.status(204).send();
 	};
@@ -44,7 +45,7 @@ export class SettingsController {
 		request: FastifyRequest<{ Body: UpdateNotificationsBody }>,
 		reply: FastifyReply,
 	) => {
-		const userId = (request as any).authUser?.id as string;
+		const userId = request.authUser.id;
 		await this.service.updateNotifications(userId, request.body);
 		return reply.status(204).send();
 	};
@@ -53,7 +54,7 @@ export class SettingsController {
 		request: FastifyRequest<{ Body: UpdateTwoFactorBody }>,
 		reply: FastifyReply,
 	) => {
-		const userId = (request as any).authUser?.id as string;
+		const userId = request.authUser.id;
 		await this.service.updateTwoFactor(userId, request.body);
 		return reply.status(204).send();
 	};
@@ -62,8 +63,7 @@ export class SettingsController {
 		request: FastifyRequest<{ Body: ChangePasswordBody }>,
 		reply: FastifyReply,
 	) => {
-		const email = (request as any).authUser?.email as string;
-		await this.service.changePassword(email, request.body);
+		await this.service.changePassword(request.authUser.email, request.body);
 		return reply.status(200).send({ message: "Senha alterada com sucesso" });
 	};
 }

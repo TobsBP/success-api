@@ -1,11 +1,11 @@
 {
-	"id": "3fef8b88-34b0-47e2-ad06-935b5a59a6f7",
-	"prevId": "fb84f8d6-22ed-4247-a664-e69e1a5f6367",
+	"id": "c24fc9fd-a769-40dd-bc43-b2142fa1eb07",
+	"prevId": "3fef8b88-34b0-47e2-ad06-935b5a59a6f7",
 	"version": "7",
 	"dialect": "postgresql",
 	"tables": {
-		"public.income": {
-			"name": "income",
+		"public.categories": {
+			"name": "categories",
 			"schema": "",
 			"columns": {
 				"id": {
@@ -21,83 +21,25 @@
 					"primaryKey": false,
 					"notNull": true
 				},
-				"date": {
-					"name": "date",
-					"type": "timestamp",
+				"name": {
+					"name": "name",
+					"type": "varchar(100)",
 					"primaryKey": false,
 					"notNull": true
 				},
-				"description": {
-					"name": "description",
-					"type": "varchar(255)",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"category": {
-					"name": "category",
-					"type": "varchar(255)",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"amount": {
-					"name": "amount",
-					"type": "numeric",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"status": {
-					"name": "status",
-					"type": "income_status",
+				"type": {
+					"name": "type",
+					"type": "category_type",
 					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true,
-					"default": "'pending'"
+					"default": "'both'"
 				},
-				"created_at": {
-					"name": "created_at",
-					"type": "timestamp",
+				"color": {
+					"name": "color",
+					"type": "varchar(20)",
 					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"updated_at": {
-					"name": "updated_at",
-					"type": "timestamp",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				}
-			},
-			"indexes": {},
-			"foreignKeys": {},
-			"compositePrimaryKeys": {},
-			"uniqueConstraints": {},
-			"policies": {},
-			"checkConstraints": {},
-			"isRLSEnabled": false
-		},
-		"public.users": {
-			"name": "users",
-			"schema": "",
-			"columns": {
-				"id": {
-					"name": "id",
-					"type": "uuid",
-					"primaryKey": true,
-					"notNull": true,
-					"default": "gen_random_uuid()"
-				},
-				"email": {
-					"name": "email",
-					"type": "varchar(255)",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"name": {
-					"name": "name",
-					"type": "varchar(255)",
-					"primaryKey": false,
-					"notNull": true
+					"notNull": false
 				},
 				"created_at": {
 					"name": "created_at",
@@ -118,10 +60,10 @@
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {
-				"users_email_unique": {
-					"name": "users_email_unique",
+				"categories_user_name_unique": {
+					"name": "categories_user_name_unique",
 					"nullsNotDistinct": false,
-					"columns": ["email"]
+					"columns": ["user_id", "name"]
 				}
 			},
 			"policies": {},
@@ -245,96 +187,6 @@
 			"checkConstraints": {},
 			"isRLSEnabled": false
 		},
-		"public.investment_assets": {
-			"name": "investment_assets",
-			"schema": "",
-			"columns": {
-				"id": {
-					"name": "id",
-					"type": "uuid",
-					"primaryKey": true,
-					"notNull": true,
-					"default": "gen_random_uuid()"
-				},
-				"user_id": {
-					"name": "user_id",
-					"type": "varchar(128)",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"name": {
-					"name": "name",
-					"type": "varchar(255)",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"asset_class": {
-					"name": "asset_class",
-					"type": "varchar(100)",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"subtitle": {
-					"name": "subtitle",
-					"type": "varchar(255)",
-					"primaryKey": false,
-					"notNull": false
-				},
-				"current_balance": {
-					"name": "current_balance",
-					"type": "numeric",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"total_invested": {
-					"name": "total_invested",
-					"type": "numeric",
-					"primaryKey": false,
-					"notNull": false
-				},
-				"average_price": {
-					"name": "average_price",
-					"type": "numeric",
-					"primaryKey": false,
-					"notNull": false
-				},
-				"monthly_yield_amount": {
-					"name": "monthly_yield_amount",
-					"type": "numeric",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "'0'"
-				},
-				"monthly_yield_percent": {
-					"name": "monthly_yield_percent",
-					"type": "numeric",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "'0'"
-				},
-				"created_at": {
-					"name": "created_at",
-					"type": "timestamp",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"updated_at": {
-					"name": "updated_at",
-					"type": "timestamp",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				}
-			},
-			"indexes": {},
-			"foreignKeys": {},
-			"compositePrimaryKeys": {},
-			"uniqueConstraints": {},
-			"policies": {},
-			"checkConstraints": {},
-			"isRLSEnabled": false
-		},
 		"public.goals": {
 			"name": "goals",
 			"schema": "",
@@ -406,6 +258,168 @@
 					"primaryKey": false,
 					"notNull": true,
 					"default": "'primary'"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.income": {
+			"name": "income",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"user_id": {
+					"name": "user_id",
+					"type": "varchar(128)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"date": {
+					"name": "date",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"description": {
+					"name": "description",
+					"type": "varchar(255)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"category": {
+					"name": "category",
+					"type": "varchar(255)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"amount": {
+					"name": "amount",
+					"type": "numeric",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"status": {
+					"name": "status",
+					"type": "income_status",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'pending'"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.investment_assets": {
+			"name": "investment_assets",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"user_id": {
+					"name": "user_id",
+					"type": "varchar(128)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"name": {
+					"name": "name",
+					"type": "varchar(255)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"asset_class": {
+					"name": "asset_class",
+					"type": "varchar(100)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"subtitle": {
+					"name": "subtitle",
+					"type": "varchar(255)",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"current_balance": {
+					"name": "current_balance",
+					"type": "numeric",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"total_invested": {
+					"name": "total_invested",
+					"type": "numeric",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"average_price": {
+					"name": "average_price",
+					"type": "numeric",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"monthly_yield_amount": {
+					"name": "monthly_yield_amount",
+					"type": "numeric",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'0'"
+				},
+				"monthly_yield_percent": {
+					"name": "monthly_yield_percent",
+					"type": "numeric",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'0'"
 				},
 				"created_at": {
 					"name": "created_at",
@@ -632,13 +646,65 @@
 			"policies": {},
 			"checkConstraints": {},
 			"isRLSEnabled": false
+		},
+		"public.users": {
+			"name": "users",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"email": {
+					"name": "email",
+					"type": "varchar(255)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"name": {
+					"name": "name",
+					"type": "varchar(255)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {
+				"users_email_unique": {
+					"name": "users_email_unique",
+					"nullsNotDistinct": false,
+					"columns": ["email"]
+				}
+			},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
 		}
 	},
 	"enums": {
-		"public.income_status": {
-			"name": "income_status",
+		"public.category_type": {
+			"name": "category_type",
 			"schema": "public",
-			"values": ["pending", "received"]
+			"values": ["income", "expense", "both"]
 		},
 		"public.goal_priority": {
 			"name": "goal_priority",
@@ -649,6 +715,11 @@
 			"name": "goal_status",
 			"schema": "public",
 			"values": ["active", "completed"]
+		},
+		"public.income_status": {
+			"name": "income_status",
+			"schema": "public",
+			"values": ["pending", "received"]
 		},
 		"public.currency": {
 			"name": "currency",

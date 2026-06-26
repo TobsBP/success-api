@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lt, sql, sum } from "drizzle-orm";
+import { and, desc, eq, gte, lt, sum } from "drizzle-orm";
 import type { Db } from "@/infra/db/client.js";
 import {
 	expenses,

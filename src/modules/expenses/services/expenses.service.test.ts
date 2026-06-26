@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { NotFoundError } from "@/core/errors/index.js";
-import type { CacheService } from "@/infra/cache/cache.service.js";
 import type { IExpensesRepository } from "@/modules/expenses/interfaces/expenses.repository.interface.js";
 import { ExpensesService } from "./expenses.service.js";
 
@@ -14,11 +13,6 @@ describe("ExpensesService", () => {
 		remove: Mock;
 		getLimit: Mock;
 		setLimit: Mock;
-	};
-	let mockCache: {
-		get: Mock;
-		set: Mock;
-		del: Mock;
 	};
 
 	const sampleEntry = {
@@ -41,14 +35,8 @@ describe("ExpensesService", () => {
 			getLimit: vi.fn(),
 			setLimit: vi.fn(),
 		};
-		mockCache = {
-			get: vi.fn().mockResolvedValue(null),
-			set: vi.fn(),
-			del: vi.fn(),
-		};
 		service = new ExpensesService({
 			expensesRepository: mockRepo as unknown as IExpensesRepository,
-			cache: mockCache as unknown as CacheService,
 		});
 	});
 

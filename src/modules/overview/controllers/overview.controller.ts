@@ -13,9 +13,10 @@ export class OverviewController {
 		request: FastifyRequest<{ Querystring: OverviewQuery }>,
 		reply: FastifyReply,
 	) => {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const userId: string = (request as any).authUser?.id ?? "";
-		const result = await this.service.getData(userId, request.query.month);
+		const result = await this.service.getData(
+			request.authUser.id,
+			request.query.month,
+		);
 		return reply.send(result);
 	};
 }

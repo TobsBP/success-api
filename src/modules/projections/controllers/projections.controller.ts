@@ -18,7 +18,7 @@ export class ProjectionsController {
 		request: FastifyRequest<{ Querystring: { timeframe?: string } }>,
 		reply: FastifyReply,
 	) => {
-		const userId = (request as any).authUser?.id as string;
+		const userId = request.authUser.id;
 		const rawTimeframe = request.query.timeframe
 			? Number(request.query.timeframe)
 			: DEFAULT_TIMEFRAME;
@@ -36,7 +36,7 @@ export class ProjectionsController {
 		request: FastifyRequest<{ Body: UpdateAssumptionsBody }>,
 		reply: FastifyReply,
 	) => {
-		const userId = (request as any).authUser?.id as string;
+		const userId = request.authUser.id;
 		const result = await this.service.updateAssumptions(userId, request.body);
 		return reply.send(result);
 	};

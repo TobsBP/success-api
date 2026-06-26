@@ -51,7 +51,7 @@ describe("Goals Routes", () => {
 
 		// Simula o authUser injetado pelo plugin firebase-auth
 		fastify.addHook("onRequest", async (request) => {
-			(request as any).authUser = {
+			request.authUser = {
 				id: "user-1",
 				email: "user@test.com",
 				name: "User",

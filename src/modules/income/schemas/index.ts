@@ -35,7 +35,11 @@ export const CreateIncomeEntryBodySchema = Type.Object({
 	description: Type.String(),
 	category: Type.String(),
 	status: Type.Optional(IncomeStatusSchema),
-	amount: Type.Integer(),
+	amount: Type.Optional(Type.Integer()),
+	// Campos exclusivos da categoria "Estágio" (calculam o amount automaticamente)
+	daysWorked: Type.Optional(Type.Number({ minimum: 0 })),
+	hoursPerDay: Type.Optional(Type.Number({ minimum: 0 })),
+	hourlyRate: Type.Optional(Type.Number({ minimum: 0 })),
 });
 
 export const UpdateIncomeEntryBodySchema = Type.Partial(
@@ -80,7 +84,7 @@ export const IncomeResponseSchema = Type.Object({
 			id: Type.String(),
 			name: Type.String(),
 			amount: Type.Integer(),
-			percent: Type.Integer(),
+			percent: Type.Number(),
 		}),
 	),
 });

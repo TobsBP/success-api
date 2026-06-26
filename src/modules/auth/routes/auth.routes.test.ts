@@ -33,7 +33,7 @@ describe("Auth Routes", () => {
 
 		// Popula authUser nas rotas protegidas (simulando o plugin firebase-auth)
 		fastify.addHook("preHandler", async (request) => {
-			(request as any).authUser = {
+			request.authUser = {
 				id: "test-id",
 				name: "Test User",
 				email: "test@example.com",

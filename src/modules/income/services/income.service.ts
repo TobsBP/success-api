@@ -1,4 +1,4 @@
-import { NotFoundError } from "@/core/errors/index.js";
+import { NotFoundError, ValidationError } from "@/core/errors/index.js";
 import type { IIncomeRepository } from "@/modules/income/interfaces/income.repository.interface.js";
 import type { IIncomeService } from "@/modules/income/interfaces/income.service.interface.js";
 import type {
@@ -152,7 +152,27 @@ export class IncomeService implements IIncomeService {
 		userId: string,
 		data: CreateIncomeEntryBody,
 	): Promise<IncomeEntryDto> {
-		return this.repo.create({ ...data, userId });
+		let { amount } = data;
+
+		if (data.category === "Estágio") {
+			const { daysWorked, hoursPerDay, hourlyRate } = data;
+			if (
+				daysWorked === undefined ||
+				hoursPerDay === undefined ||
+				hourlyRate === undefined
+			) {
+				throw new ValidationError(
+					"Para categoria 'Estágio' informe daysWorked, hoursPerDay e hourlyRate",
+				);
+			}
+			amount = Math.round(daysWorked * hoursPerDay * hourlyRate);
+		}
+
+		if (amount === undefined) {
+			throw new ValidationError("O campo 'amount' é obrigatório");
+		}
+
+		return this.repo.create({ ...data, amount, userId });
 	}
 
 	async updateEntry(

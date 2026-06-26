@@ -9,9 +9,7 @@ export class NetworthController {
 	}
 
 	get = async (request: FastifyRequest, reply: FastifyReply) => {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const userId: string = (request as any).authUser?.id ?? "";
-		const result = await this.service.getNetWorth(userId);
+		const result = await this.service.getNetWorth(request.authUser.id);
 		return reply.send(result);
 	};
 }

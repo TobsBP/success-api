@@ -4,6 +4,9 @@ import { getRedis } from "@/infra/cache/client.js";
 import { getDb } from "@/infra/db/client.js";
 import { AuthController } from "@/modules/auth/controllers/auth.controller.js";
 import { AuthService } from "@/modules/auth/services/auth.service.js";
+import { CategoriesController } from "@/modules/categories/controllers/categories.controller.js";
+import { CategoriesRepository } from "@/modules/categories/repositories/categories.repository.js";
+import { CategoriesService } from "@/modules/categories/services/categories.service.js";
 import { ExpensesController } from "@/modules/expenses/controllers/expenses.controller.js";
 import { ExpensesRepository } from "@/modules/expenses/repositories/expenses.repository.js";
 import { ExpensesService } from "@/modules/expenses/services/expenses.service.js";
@@ -83,6 +86,9 @@ export function setupContainer() {
 		settingsRepository: asClass(SettingsRepository).singleton(),
 		settingsService: asClass(SettingsService).singleton(),
 		settingsController: asClass(SettingsController).singleton(),
+		categoriesRepository: asClass(CategoriesRepository).singleton(),
+		categoriesService: asClass(CategoriesService).singleton(),
+		categoriesController: asClass(CategoriesController).singleton(),
 	});
 
 	return container;

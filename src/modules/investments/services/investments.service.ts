@@ -1,5 +1,4 @@
 import { NotFoundError } from "@/core/errors/index.js";
-import type { CacheService } from "@/infra/cache/cache.service.js";
 import type { IInvestmentsRepository } from "@/modules/investments/interfaces/investments.repository.interface.js";
 import type { IInvestmentsService } from "@/modules/investments/interfaces/investments.service.interface.js";
 import type {
@@ -11,22 +10,16 @@ import type {
 
 export class InvestmentsService implements IInvestmentsService {
 	private repo: IInvestmentsRepository;
-	private cache: CacheService;
 
 	constructor({
 		investmentsRepository,
-		cache,
-	}: {
-		investmentsRepository: IInvestmentsRepository;
-		cache: CacheService;
-	}) {
+	}: { investmentsRepository: IInvestmentsRepository }) {
 		this.repo = investmentsRepository;
-		this.cache = cache;
 	}
 
 	async getData(
 		userId: string,
-		range?: string,
+		_range?: string,
 	): Promise<InvestmentsResponseDto> {
 		const assets = await this.repo.findAll(userId);
 

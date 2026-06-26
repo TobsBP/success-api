@@ -35,7 +35,7 @@ export class AuthService {
 		}
 
 		const expiresAt = new Date(
-			Date.now() + parseInt(data.expiresIn) * 1000,
+			Date.now() + parseInt(data.expiresIn, 10) * 1000,
 		).toISOString();
 
 		return {

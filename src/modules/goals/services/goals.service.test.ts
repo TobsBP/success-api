@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { NotFoundError } from "@/core/errors/index.js";
-import type { CacheService } from "@/infra/cache/cache.service.js";
 import type { IGoalsRepository } from "@/modules/goals/interfaces/goals.repository.interface.js";
 import type { GoalDto } from "@/modules/goals/schemas/index.js";
 import { GoalsService } from "./goals.service.js";
@@ -31,11 +30,6 @@ describe("GoalsService", () => {
 		update: Mock;
 		remove: Mock;
 	};
-	let mockCache: {
-		get: Mock;
-		set: Mock;
-		del: Mock;
-	};
 
 	beforeEach(() => {
 		mockRepo = {
@@ -45,14 +39,8 @@ describe("GoalsService", () => {
 			update: vi.fn(),
 			remove: vi.fn(),
 		};
-		mockCache = {
-			get: vi.fn().mockResolvedValue(null),
-			set: vi.fn(),
-			del: vi.fn(),
-		};
 		service = new GoalsService({
 			goalsRepository: mockRepo as unknown as IGoalsRepository,
-			cache: mockCache as unknown as CacheService,
 		});
 	});
 

@@ -80,14 +80,7 @@ export const ReportsResponseSchema = Type.Object({
 
 // --- Query ---
 export const ReportsQuerySchema = Type.Object({
-	range: Type.Optional(
-		Type.Union([
-			Type.Literal("last-3-months"),
-			Type.Literal("last-6-months"),
-			Type.Literal("this-year"),
-			Type.Literal("custom"),
-		]),
-	),
+	range: Type.Optional(Type.String()),
 	from: Type.Optional(Type.String()),
 	to: Type.Optional(Type.String()),
 	accounts: Type.Optional(Type.String()),

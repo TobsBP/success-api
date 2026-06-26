@@ -59,7 +59,11 @@ describe("Settings Routes", () => {
 
 		// Simula authUser no request
 		fastify.addHook("onRequest", async (request) => {
-			(request as any).authUser = { id: "user-1", email: "joao@example.com" };
+			request.authUser = {
+				id: "user-1",
+				name: "João",
+				email: "joao@example.com",
+			};
 		});
 
 		fastify.get("/settings", controller.getSettings);

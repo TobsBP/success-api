@@ -160,7 +160,9 @@ describe("SettingsService", () => {
 
 	describe("changePassword", () => {
 		it("deve lançar AppError se a senha atual estiver incorreta", async () => {
-			global.fetch = vi.fn().mockResolvedValue({ ok: false }) as any;
+			global.fetch = vi
+				.fn()
+				.mockResolvedValue({ ok: false }) as unknown as typeof fetch;
 
 			await expect(
 				service.changePassword("user@example.com", {
@@ -171,7 +173,9 @@ describe("SettingsService", () => {
 		});
 
 		it("deve chamar Firebase Admin para atualizar a senha quando a verificação passa", async () => {
-			global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any;
+			global.fetch = vi
+				.fn()
+				.mockResolvedValue({ ok: true }) as unknown as typeof fetch;
 			mockRepo.upsert.mockResolvedValue(makeDefaultRow());
 
 			const { getAuth } = await import("firebase-admin/auth");

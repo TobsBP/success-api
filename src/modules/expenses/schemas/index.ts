@@ -46,7 +46,7 @@ export const ExpensesResponseSchema = Type.Object({
 	summary: Type.Object({
 		totalSpent: Type.Object({ amount: Type.Number(), delta: DeltaSchema }),
 		monthlyLimit: Type.Object({
-			limit: Type.Integer(),
+			limit: Type.Number(),
 			spent: Type.Number(),
 			remaining: Type.Number(),
 			usedPercent: Type.Number(),
