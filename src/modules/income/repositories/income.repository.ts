@@ -8,6 +8,11 @@ import type {
 	UpdateIncomeEntryBody,
 } from "@/modules/income/schemas/index.js";
 
+function parseLocalDate(dateStr: string): Date {
+	const [year, month, day] = dateStr.split("-").map(Number);
+	return new Date(year, month - 1, day);
+}
+
 function getMonthRange(month: string): { start: Date; end: Date } {
 	const [year, mon] = month.split("-").map(Number);
 	const start = new Date(year, mon - 1, 1);
@@ -52,7 +57,7 @@ export class IncomeRepository implements IIncomeRepository {
 			.insert(income)
 			.values({
 				userId: data.userId,
-				date: new Date(data.date),
+				date: parseLocalDate(data.date),
 				description: data.description,
 				category: data.category,
 				amount: String(data.amount),
@@ -67,7 +72,7 @@ export class IncomeRepository implements IIncomeRepository {
 		data: UpdateIncomeEntryBody,
 	): Promise<IncomeEntryDto | null> {
 		const updates: Partial<typeof income.$inferInsert> = {};
-		if (data.date !== undefined) updates.date = new Date(data.date);
+		if (data.date !== undefined) updates.date = parseLocalDate(data.date);
 		if (data.description !== undefined) updates.description = data.description;
 		if (data.category !== undefined) updates.category = data.category;
 		if (data.amount !== undefined) updates.amount = String(data.amount);

@@ -38,6 +38,9 @@ export const CreateGoalBodySchema = Type.Object({
 
 export const UpdateGoalBodySchema = Type.Partial(CreateGoalBodySchema);
 export const GoalParamsSchema = Type.Object({ id: UuidSchema });
+export const DepositBodySchema = Type.Object({
+	amount: Type.Integer({ minimum: 1 }),
+});
 
 export const GoalsResponseSchema = Type.Object({
 	summary: Type.Object({
@@ -53,3 +56,4 @@ export type CreateGoalBody = Static<typeof CreateGoalBodySchema>;
 export type UpdateGoalBody = Static<typeof UpdateGoalBodySchema>;
 export type GoalParams = Static<typeof GoalParamsSchema>;
 export type GoalsResponseDto = Static<typeof GoalsResponseSchema>;
+export type DepositBody = Static<typeof DepositBodySchema>;

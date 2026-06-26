@@ -1,4 +1,4 @@
-import { NotFoundError } from "@/core/errors/index.js";
+import { AppError, NotFoundError } from "@/core/errors/index.js";
 import type { IGoalsRepository } from "@/modules/goals/interfaces/goals.repository.interface.js";
 import type { IGoalsService } from "@/modules/goals/interfaces/goals.service.interface.js";
 import type {
@@ -43,6 +43,15 @@ export class GoalsService implements IGoalsService {
 	async updateGoal(id: string, data: UpdateGoalBody): Promise<GoalDto> {
 		const updated = await this.repo.update(id, data);
 		if (!updated) throw new NotFoundError("Goal", id);
+		return updated;
+	}
+
+	async deposit(id: string, amount: number): Promise<GoalDto> {
+		const existing = await this.repo.findById(id);
+		if (!existing) throw new NotFoundError("Goal", id);
+		const updated = await this.repo.deposit(id, amount);
+		if (!updated) throw new AppError("Deposit");
+
 		return updated;
 	}
 

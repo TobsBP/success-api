@@ -9,5 +9,6 @@ export interface IGoalsRepository {
 	findById(id: string): Promise<GoalDto | null>;
 	create(data: CreateGoalBody & { userId: string }): Promise<GoalDto>;
 	update(id: string, data: UpdateGoalBody): Promise<GoalDto | null>;
+	deposit(id: string, amount: number): Promise<GoalDto | null>;
 	remove(id: string): Promise<void>;
 }

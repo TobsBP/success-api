@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { Db } from "@/infra/db/client.js";
 import { goals } from "@/infra/db/schema/index.js";
 import type { IGoalsRepository } from "@/modules/goals/interfaces/goals.repository.interface.js";
@@ -38,6 +38,18 @@ export class GoalsRepository implements IGoalsRepository {
 		const [row] = await this.db
 			.update(goals)
 			.set({ ...data, updatedAt: new Date() })
+			.where(eq(goals.id, id))
+			.returning();
+		return row ? this.toDto(row) : null;
+	}
+
+	async deposit(id: string, amount: number): Promise<GoalDto | null> {
+		const [row] = await this.db
+			.update(goals)
+			.set({
+				currentAmount: sql`${goals.currentAmount} + ${amount}`,
+				updatedAt: new Date(),
+			})
 			.where(eq(goals.id, id))
 			.returning();
 		return row ? this.toDto(row) : null;

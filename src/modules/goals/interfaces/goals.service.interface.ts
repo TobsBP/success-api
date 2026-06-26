@@ -9,5 +9,6 @@ export interface IGoalsService {
 	getData(userId: string): Promise<GoalsResponseDto>;
 	createGoal(userId: string, data: CreateGoalBody): Promise<GoalDto>;
 	updateGoal(id: string, data: UpdateGoalBody): Promise<GoalDto>;
+	deposit(id: string, amount: number): Promise<GoalDto>;
 	removeGoal(id: string): Promise<void>;
 }

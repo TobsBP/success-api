@@ -8,6 +8,11 @@ import type {
 	UpdateExpenseBody,
 } from "@/modules/expenses/schemas/index.js";
 
+function parseLocalDate(dateStr: string): Date {
+	const [year, month, day] = dateStr.split("-").map(Number);
+	return new Date(year, month - 1, day);
+}
+
 function getMonthRange(month: string) {
 	const [y, m] = month.split("-").map(Number);
 	return { start: new Date(y, m - 1, 1), end: new Date(y, m, 1) };
@@ -50,7 +55,7 @@ export class ExpensesRepository implements IExpensesRepository {
 			.insert(expenses)
 			.values({
 				userId: data.userId,
-				date: new Date(data.date),
+				date: parseLocalDate(data.date),
 				description: data.description,
 				category: data.category,
 				amount: String(data.amount),
@@ -64,7 +69,7 @@ export class ExpensesRepository implements IExpensesRepository {
 		data: UpdateExpenseBody,
 	): Promise<ExpenseEntryDto | null> {
 		const set = {
-			...(data.date !== undefined && { date: new Date(data.date) }),
+			...(data.date !== undefined && { date: parseLocalDate(data.date) }),
 			...(data.description !== undefined && { description: data.description }),
 			...(data.category !== undefined && { category: data.category }),
 			...(data.amount !== undefined && { amount: String(data.amount) }),
