@@ -17,6 +17,11 @@ describe("Net Worth Routes", () => {
 
 	beforeEach(async () => {
 		fastify = Fastify();
+
+		fastify.addHook("onRequest", async (request) => {
+			request.authUser = { id: "", email: "", name: "" };
+		});
+
 		mockService = { getNetWorth: vi.fn() };
 
 		const controller = new NetworthController({

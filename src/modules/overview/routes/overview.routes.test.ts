@@ -17,6 +17,11 @@ describe("Overview Routes", () => {
 
 	beforeEach(async () => {
 		fastify = Fastify();
+
+		fastify.addHook("onRequest", async (request) => {
+			request.authUser = { id: "", email: "", name: "" };
+		});
+
 		mockService = { getData: vi.fn() };
 
 		const controller = new OverviewController({
