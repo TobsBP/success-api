@@ -6,13 +6,9 @@ export const DeltaSchema = Type.Object({
 	unit: Type.Union([
 		Type.Literal("percent"),
 		Type.Literal("pp"),
-		Type.Literal("currency"),
+		Type.Literal("brl"),
 	]),
-	direction: Type.Union([
-		Type.Literal("up"),
-		Type.Literal("down"),
-		Type.Literal("neutral"),
-	]),
+	direction: Type.Union([Type.Literal("up"), Type.Literal("down")]),
 	comparisonLabel: Type.Optional(Type.String()),
 });
 
@@ -25,6 +21,7 @@ export const ChartPointSchema = Type.Object({
 export const ChartSeriesSchema = Type.Object({
 	id: Type.String(),
 	label: Type.String(),
+	color: Type.String(),
 	points: Type.Array(ChartPointSchema),
 });
 
@@ -39,12 +36,14 @@ export const ExpenseCategoryItemSchema = Type.Object({
 	category: Type.String(),
 	amount: Type.Number(),
 	percent: Type.Number(),
+	color: Type.Optional(Type.String()),
 });
 
 export const IncomeSourceItemSchema = Type.Object({
 	source: Type.String(),
 	amount: Type.Number(),
 	percent: Type.Number(),
+	indicatorClassName: Type.Optional(Type.String()),
 });
 
 // --- Goal entry ---
@@ -54,6 +53,8 @@ export const GoalEntrySchema = Type.Object({
 	currentAmount: Type.Number(),
 	targetAmount: Type.Number(),
 	progressPercent: Type.Number(),
+	indicatorClassName: Type.String(),
+	iconClassName: Type.String(),
 });
 
 // --- Investment summary ---
@@ -96,6 +97,12 @@ export const OverviewResponseSchema = Type.Object({
 		income: ChartSeriesSchema,
 		expenses: ChartSeriesSchema,
 		balance: ChartSeriesSchema,
+		nextMonthPreview: Type.Optional(
+			Type.Object({
+				label: Type.String(),
+				income: Type.Number(),
+			}),
+		),
 	}),
 	expensesByCategory: Type.Object({
 		total: Type.Number(),

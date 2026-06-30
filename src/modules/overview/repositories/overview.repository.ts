@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lt, sum } from "drizzle-orm";
+import { and, desc, eq, gte, lt, sql, sum } from "drizzle-orm";
 import type { Db } from "@/infra/db/client.js";
 import {
 	expenses,
@@ -8,6 +8,12 @@ import {
 } from "@/infra/db/schema/index.js";
 
 export interface MonthTotals {
+	totalIncome: number;
+	totalExpenses: number;
+}
+
+export interface MonthlyTotals {
+	month: string;
 	totalIncome: number;
 	totalExpenses: number;
 }
@@ -27,10 +33,13 @@ export interface GoalRow {
 	name: string;
 	currentAmount: number;
 	targetAmount: number;
+	indicatorClassName: string;
+	iconClassName: string;
 }
 
 export interface InvestmentRow {
 	name: string;
+	indexLabel: string;
 	balance: number;
 	monthlyYieldAmount: number;
 	monthlyYieldPercent: number;
@@ -79,6 +88,59 @@ export class OverviewRepository {
 			totalIncome: Number(incomeRow?.total ?? 0),
 			totalExpenses: Number(expenseRow?.total ?? 0),
 		};
+	}
+
+	async getMonthlyTotalsByMonth(
+		userId: string,
+		start: Date,
+		end: Date,
+	): Promise<MonthlyTotals[]> {
+		const incomeMonth = sql<string>`to_char(${income.date}, 'YYYY-MM')`;
+		const expenseMonth = sql<string>`to_char(${expenses.date}, 'YYYY-MM')`;
+
+		const [incomeRows, expenseRows] = await Promise.all([
+			this.db
+				.select({ month: incomeMonth, total: sum(income.amount) })
+				.from(income)
+				.where(
+					and(
+						eq(income.userId, userId),
+						gte(income.date, start),
+						lt(income.date, end),
+					),
+				)
+				.groupBy(incomeMonth),
+			this.db
+				.select({ month: expenseMonth, total: sum(expenses.amount) })
+				.from(expenses)
+				.where(
+					and(
+						eq(expenses.userId, userId),
+						gte(expenses.date, start),
+						lt(expenses.date, end),
+					),
+				)
+				.groupBy(expenseMonth),
+		]);
+
+		const totals = new Map<string, MonthlyTotals>();
+		for (const row of incomeRows) {
+			totals.set(row.month, {
+				month: row.month,
+				totalIncome: Number(row.total ?? 0),
+				totalExpenses: 0,
+			});
+		}
+		for (const row of expenseRows) {
+			const current = totals.get(row.month);
+			totals.set(row.month, {
+				month: row.month,
+				totalIncome: current?.totalIncome ?? 0,
+				totalExpenses: Number(row.total ?? 0),
+			});
+		}
+
+		return [...totals.values()].sort((a, b) => a.month.localeCompare(b.month));
 	}
 
 	async getExpensesByCategory(
@@ -139,6 +201,8 @@ export class OverviewRepository {
 				name: goals.name,
 				currentAmount: goals.currentAmount,
 				targetAmount: goals.targetAmount,
+				indicatorClassName: goals.color,
+				iconClassName: goals.icon,
 			})
 			.from(goals)
 			.where(and(eq(goals.userId, userId), eq(goals.status, "active")));
@@ -148,6 +212,8 @@ export class OverviewRepository {
 			name: r.name,
 			currentAmount: r.currentAmount,
 			targetAmount: r.targetAmount,
+			indicatorClassName: r.indicatorClassName,
+			iconClassName: r.iconClassName,
 		}));
 	}
 
@@ -155,6 +221,7 @@ export class OverviewRepository {
 		const [row] = await this.db
 			.select({
 				name: investmentAssets.name,
+				indexLabel: investmentAssets.subtitle,
 				balance: investmentAssets.currentBalance,
 				monthlyYieldAmount: investmentAssets.monthlyYieldAmount,
 				monthlyYieldPercent: investmentAssets.monthlyYieldPercent,
@@ -167,6 +234,7 @@ export class OverviewRepository {
 		if (!row) return null;
 		return {
 			name: row.name,
+			indexLabel: row.indexLabel ?? "—",
 			balance: Number(row.balance),
 			monthlyYieldAmount: Number(row.monthlyYieldAmount),
 			monthlyYieldPercent: Number(row.monthlyYieldPercent),

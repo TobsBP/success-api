@@ -3,12 +3,18 @@ import type {
 	GoalRow,
 	InvestmentRow,
 	LargestExpenseRow,
+	MonthlyTotals,
 	MonthTotals,
 	SourceTotal,
 } from "@/modules/overview/repositories/overview.repository.js";
 
 export interface IOverviewRepository {
 	getMonthTotals(userId: string, start: Date, end: Date): Promise<MonthTotals>;
+	getMonthlyTotalsByMonth(
+		userId: string,
+		start: Date,
+		end: Date,
+	): Promise<MonthlyTotals[]>;
 	getExpensesByCategory(
 		userId: string,
 		start: Date,
