@@ -100,6 +100,70 @@ describe("ExpensesService", () => {
 				expect.objectContaining({ userId: "user-1", amount: 10000 }),
 			);
 		});
+
+		it("não deve passar recurringMonths para o repositório", async () => {
+			mockRepo.create.mockResolvedValue(sampleEntry);
+
+			await service.createEntry("user-1", {
+				date: "2024-05-10",
+				description: "Netflix",
+				category: "Assinatura",
+				amount: 5000,
+				recurringMonths: 0,
+			});
+
+			expect(mockRepo.create).toHaveBeenCalledTimes(1);
+			expect(mockRepo.create.mock.calls[0][0]).not.toHaveProperty(
+				"recurringMonths",
+			);
+		});
+
+		it("deve replicar a assinatura para os próximos meses", async () => {
+			mockRepo.create.mockResolvedValue(sampleEntry);
+
+			await service.createEntry("user-1", {
+				date: "2024-05-10",
+				description: "Netflix",
+				category: "Assinatura",
+				amount: 5000,
+				recurringMonths: 2,
+			});
+
+			// original + 2 cópias
+			expect(mockRepo.create).toHaveBeenCalledTimes(3);
+			const dates = mockRepo.create.mock.calls.map((c) => c[0].date);
+			expect(dates).toEqual(["2024-05-10", "2024-06-10", "2024-07-10"]);
+		});
+
+		it("deve reconhecer a categoria de forma case-insensitive e virar o ano", async () => {
+			mockRepo.create.mockResolvedValue(sampleEntry);
+
+			await service.createEntry("user-1", {
+				date: "2024-12-31",
+				description: "Spotify",
+				category: "assinatura",
+				amount: 2000,
+				recurringMonths: 2,
+			});
+
+			const dates = mockRepo.create.mock.calls.map((c) => c[0].date);
+			// dez/31 → jan/31 → fev clampa para 29 (2025 não é bissexto → 28)
+			expect(dates).toEqual(["2024-12-31", "2025-01-31", "2025-02-28"]);
+		});
+
+		it("não deve replicar quando a categoria não é assinatura", async () => {
+			mockRepo.create.mockResolvedValue(sampleEntry);
+
+			await service.createEntry("user-1", {
+				date: "2024-05-10",
+				description: "Supermercado",
+				category: "Alimentação",
+				amount: 10000,
+				recurringMonths: 3,
+			});
+
+			expect(mockRepo.create).toHaveBeenCalledTimes(1);
+		});
 	});
 
 	describe("updateEntry", () => {

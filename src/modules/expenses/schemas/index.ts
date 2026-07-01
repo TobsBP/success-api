@@ -31,6 +31,10 @@ export const CreateExpenseBodySchema = Type.Object({
 	description: Type.String(),
 	category: Type.String(),
 	amount: Type.Number(),
+	// Para categoria "Assinatura": quantos meses futuros replicar a despesa
+	// (ex.: 2 gera a despesa do mês seguinte e do subsequente). Ignorado para
+	// as demais categorias.
+	recurringMonths: Type.Optional(Type.Integer({ minimum: 0, maximum: 12 })),
 });
 
 export const UpdateExpenseBodySchema = Type.Partial(CreateExpenseBodySchema);

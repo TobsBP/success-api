@@ -13,6 +13,22 @@ function getCurrentMonth(): string {
 	return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
+const SUBSCRIPTION_CATEGORY = "assinatura";
+
+/**
+ * Soma `months` meses a uma data `YYYY-MM-DD`, mantendo o dia. Se o mês de
+ * destino não tiver aquele dia (ex.: 31 → fevereiro), usa o último dia do mês.
+ */
+function addMonths(dateStr: string, months: number): string {
+	const [year, month, day] = dateStr.split("-").map(Number);
+	const targetIndex = month - 1 + months;
+	const targetYear = year + Math.floor(targetIndex / 12);
+	const targetMonth = ((targetIndex % 12) + 12) % 12;
+	const lastDay = new Date(targetYear, targetMonth + 1, 0).getDate();
+	const clampedDay = Math.min(day, lastDay);
+	return `${targetYear}-${String(targetMonth + 1).padStart(2, "0")}-${String(clampedDay).padStart(2, "0")}`;
+}
+
 export class ExpensesService implements IExpensesService {
 	private repo: IExpensesRepository;
 
@@ -90,7 +106,25 @@ export class ExpensesService implements IExpensesService {
 		userId: string,
 		data: CreateExpenseBody,
 	): Promise<ExpenseEntryDto> {
-		return this.repo.create({ ...data, userId });
+		const { recurringMonths, ...expense } = data;
+		const created = await this.repo.create({ ...expense, userId });
+
+		// Assinaturas se repetem: replica a despesa para os próximos meses.
+		const isSubscription =
+			expense.category.trim().toLowerCase() === SUBSCRIPTION_CATEGORY;
+		if (isSubscription && recurringMonths && recurringMonths > 0) {
+			await Promise.all(
+				Array.from({ length: recurringMonths }, (_, index) =>
+					this.repo.create({
+						...expense,
+						userId,
+						date: addMonths(expense.date, index + 1),
+					}),
+				),
+			);
+		}
+
+		return created;
 	}
 
 	async updateEntry(
