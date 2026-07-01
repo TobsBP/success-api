@@ -14,6 +14,24 @@ function getCurrentMonth(): string {
 }
 
 const SUBSCRIPTION_CATEGORY = "assinatura";
+const CARD_CATEGORY = "nubank";
+
+/**
+ * Divide um valor total inteiro em `parts` parcelas cujo somatório é exatamente
+ * o total. O resto da divisão é distribuído nas primeiras parcelas (ex.: 10000
+ * em 3 → [3334, 3333, 3333]).
+ */
+function splitAmount(total: number, parts: number): number[] {
+	const base = Math.floor(total / parts);
+	let remainder = total - base * parts;
+	return Array.from({ length: parts }, () => {
+		if (remainder > 0) {
+			remainder -= 1;
+			return base + 1;
+		}
+		return base;
+	});
+}
 
 /**
  * Soma `months` meses a uma data `YYYY-MM-DD`, mantendo o dia. Se o mês de
@@ -106,13 +124,34 @@ export class ExpensesService implements IExpensesService {
 		userId: string,
 		data: CreateExpenseBody,
 	): Promise<ExpenseEntryDto> {
-		const { recurringMonths, ...expense } = data;
+		const { recurringMonths, installments, ...expense } = data;
+		const category = expense.category.trim().toLowerCase();
+
+		// NuBank: divide o valor total em N parcelas mensais (a primeira já no
+		// mês de `date`). Cada parcela é uma despesa própria.
+		if (category === CARD_CATEGORY && installments && installments > 1) {
+			const parcels = splitAmount(expense.amount, installments);
+			const entries = parcels.map((amount, index) => ({
+				...expense,
+				userId,
+				amount,
+				date: addMonths(expense.date, index),
+				description: `${expense.description} (${index + 1}/${installments})`,
+			}));
+			const [first, ...rest] = entries;
+			const created = await this.repo.create(first);
+			await Promise.all(rest.map((parcel) => this.repo.create(parcel)));
+			return created;
+		}
+
 		const created = await this.repo.create({ ...expense, userId });
 
-		// Assinaturas se repetem: replica a despesa para os próximos meses.
-		const isSubscription =
-			expense.category.trim().toLowerCase() === SUBSCRIPTION_CATEGORY;
-		if (isSubscription && recurringMonths && recurringMonths > 0) {
+		// Assinaturas se repetem: replica a despesa (valor cheio) nos próximos meses.
+		if (
+			category === SUBSCRIPTION_CATEGORY &&
+			recurringMonths &&
+			recurringMonths > 0
+		) {
 			await Promise.all(
 				Array.from({ length: recurringMonths }, (_, index) =>
 					this.repo.create({

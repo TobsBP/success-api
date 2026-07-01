@@ -35,6 +35,10 @@ export const CreateExpenseBodySchema = Type.Object({
 	// (ex.: 2 gera a despesa do mês seguinte e do subsequente). Ignorado para
 	// as demais categorias.
 	recurringMonths: Type.Optional(Type.Integer({ minimum: 0, maximum: 12 })),
+	// Para categoria "NuBank": divide `amount` (valor total) em N parcelas
+	// mensais, uma despesa por mês a partir de `date`. Ignorado nas demais
+	// categorias.
+	installments: Type.Optional(Type.Integer({ minimum: 1, maximum: 48 })),
 });
 
 export const UpdateExpenseBodySchema = Type.Partial(CreateExpenseBodySchema);

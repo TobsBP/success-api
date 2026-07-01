@@ -164,6 +164,52 @@ describe("ExpensesService", () => {
 
 			expect(mockRepo.create).toHaveBeenCalledTimes(1);
 		});
+
+		it("deve parcelar despesas NuBank dividindo o valor e distribuindo o resto", async () => {
+			mockRepo.create.mockResolvedValue(sampleEntry);
+
+			await service.createEntry("user-1", {
+				date: "2024-05-10",
+				description: "Notebook",
+				category: "NuBank",
+				amount: 10000,
+				installments: 3,
+			});
+
+			expect(mockRepo.create).toHaveBeenCalledTimes(3);
+			const calls = mockRepo.create.mock.calls.map((c) => c[0]);
+			expect(calls.map((c) => c.amount)).toEqual([3334, 3333, 3333]);
+			expect(calls.map((c) => c.amount).reduce((a, b) => a + b, 0)).toBe(10000);
+			expect(calls.map((c) => c.date)).toEqual([
+				"2024-05-10",
+				"2024-06-10",
+				"2024-07-10",
+			]);
+			expect(calls.map((c) => c.description)).toEqual([
+				"Notebook (1/3)",
+				"Notebook (2/3)",
+				"Notebook (3/3)",
+			]);
+		});
+
+		it("não deve passar installments para o repositório e não parcela com 1", async () => {
+			mockRepo.create.mockResolvedValue(sampleEntry);
+
+			await service.createEntry("user-1", {
+				date: "2024-05-10",
+				description: "Fone",
+				category: "NuBank",
+				amount: 5000,
+				installments: 1,
+			});
+
+			expect(mockRepo.create).toHaveBeenCalledTimes(1);
+			expect(mockRepo.create.mock.calls[0][0]).not.toHaveProperty(
+				"installments",
+			);
+			expect(mockRepo.create.mock.calls[0][0].amount).toBe(5000);
+			expect(mockRepo.create.mock.calls[0][0].description).toBe("Fone");
+		});
 	});
 
 	describe("updateEntry", () => {
