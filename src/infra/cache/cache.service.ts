@@ -33,4 +33,24 @@ export class CacheService {
 		if (!this.redis || keys.length === 0) return;
 		await this.redis.del(...keys);
 	}
+
+	/**
+	 * Remove todas as chaves que casam com o `pattern` (glob do Redis, ex.:
+	 * `overview:123:*`). Usa `SCAN` para não bloquear o Redis com `KEYS`.
+	 */
+	async delByPattern(pattern: string): Promise<void> {
+		if (!this.redis) return;
+		let cursor = "0";
+		do {
+			const [next, keys] = await this.redis.scan(
+				cursor,
+				"MATCH",
+				pattern,
+				"COUNT",
+				100,
+			);
+			cursor = next;
+			if (keys.length > 0) await this.redis.del(...keys);
+		} while (cursor !== "0");
+	}
 }

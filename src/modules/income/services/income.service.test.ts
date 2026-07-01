@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { NotFoundError } from "@/core/errors/index.js";
+import type { CacheService } from "@/infra/cache/cache.service.js";
 import type { IIncomeRepository } from "@/modules/income/interfaces/income.repository.interface.js";
 import { IncomeService } from "./income.service.js";
 
@@ -41,6 +42,12 @@ describe("IncomeService", () => {
 		};
 		service = new IncomeService({
 			incomeRepository: mockRepo as unknown as IIncomeRepository,
+			cache: {
+				get: vi.fn(),
+				set: vi.fn(),
+				del: vi.fn(),
+				delByPattern: vi.fn(),
+			} as unknown as CacheService,
 		});
 	});
 
@@ -133,6 +140,7 @@ describe("IncomeService", () => {
 			mockRepo.update.mockResolvedValue(updated);
 
 			const result = await service.updateEntry(
+				"user-1",
 				"00000000-0000-0000-0000-000000000001",
 				{
 					amount: 600000,
@@ -146,7 +154,7 @@ describe("IncomeService", () => {
 			mockRepo.update.mockResolvedValue(null);
 
 			await expect(
-				service.updateEntry("00000000-0000-0000-0000-000000000001", {
+				service.updateEntry("user-1", "00000000-0000-0000-0000-000000000001", {
 					amount: 600000,
 				}),
 			).rejects.toThrow(NotFoundError);
@@ -159,7 +167,7 @@ describe("IncomeService", () => {
 			mockRepo.remove.mockResolvedValue(undefined);
 
 			await expect(
-				service.removeEntry("00000000-0000-0000-0000-000000000001"),
+				service.removeEntry("user-1", "00000000-0000-0000-0000-000000000001"),
 			).resolves.toBeUndefined();
 			expect(mockRepo.remove).toHaveBeenCalledWith(
 				"00000000-0000-0000-0000-000000000001",
@@ -170,7 +178,7 @@ describe("IncomeService", () => {
 			mockRepo.findById.mockResolvedValue(null);
 
 			await expect(
-				service.removeEntry("00000000-0000-0000-0000-000000000001"),
+				service.removeEntry("user-1", "00000000-0000-0000-0000-000000000001"),
 			).rejects.toThrow(NotFoundError);
 		});
 	});

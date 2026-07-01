@@ -11,6 +11,10 @@ export interface IIncomeService {
 		userId: string,
 		data: CreateIncomeEntryBody,
 	): Promise<IncomeEntryDto>;
-	updateEntry(id: string, data: UpdateIncomeEntryBody): Promise<IncomeEntryDto>;
-	removeEntry(id: string): Promise<void>;
+	updateEntry(
+		userId: string,
+		id: string,
+		data: UpdateIncomeEntryBody,
+	): Promise<IncomeEntryDto>;
+	removeEntry(userId: string, id: string): Promise<void>;
 }

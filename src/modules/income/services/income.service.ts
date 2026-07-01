@@ -1,4 +1,5 @@
 import { NotFoundError, ValidationError } from "@/core/errors/index.js";
+import type { CacheService } from "@/infra/cache/cache.service.js";
 import type { IIncomeRepository } from "@/modules/income/interfaces/income.repository.interface.js";
 import type { IIncomeService } from "@/modules/income/interfaces/income.service.interface.js";
 import type {
@@ -52,8 +53,16 @@ function last6Months(
 
 export class IncomeService implements IIncomeService {
 	private repo: IIncomeRepository;
-	constructor({ incomeRepository }: { incomeRepository: IIncomeRepository }) {
+	private cache: CacheService;
+	constructor({
+		incomeRepository,
+		cache,
+	}: {
+		incomeRepository: IIncomeRepository;
+		cache: CacheService;
+	}) {
 		this.repo = incomeRepository;
+		this.cache = cache;
 	}
 
 	async getMonthData(
@@ -172,21 +181,28 @@ export class IncomeService implements IIncomeService {
 			throw new ValidationError("O campo 'amount' é obrigatório");
 		}
 
-		return this.repo.create({ ...data, amount, userId });
+		const created = await this.repo.create({ ...data, amount, userId });
+		await this.cache.delByPattern(`overview:${userId}:*`);
+		return created;
 	}
 
 	async updateEntry(
+		userId: string,
 		id: string,
 		data: UpdateIncomeEntryBody,
 	): Promise<IncomeEntryDto> {
 		const updated = await this.repo.update(id, data);
 		if (!updated) throw new NotFoundError("Income entry", id);
+		// Invalida o cache do overview: alterar status/valor/data de uma receita
+		// muda os totais agregados (que só contam receitas "received").
+		await this.cache.delByPattern(`overview:${userId}:*`);
 		return updated;
 	}
 
-	async removeEntry(id: string): Promise<void> {
+	async removeEntry(userId: string, id: string): Promise<void> {
 		const entry = await this.repo.findById(id);
 		if (!entry) throw new NotFoundError("Income entry", id);
 		await this.repo.remove(id);
+		await this.cache.delByPattern(`overview:${userId}:*`);
 	}
 }

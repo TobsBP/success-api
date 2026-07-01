@@ -144,6 +144,7 @@ describe("Income Routes", () => {
 
 		expect(response.statusCode).toBe(200);
 		expect(mockService.updateEntry).toHaveBeenCalledWith(
+			"user-1",
 			"00000000-0000-0000-0000-000000000001",
 			{ amount: 600000 },
 		);
@@ -157,6 +158,7 @@ describe("Income Routes", () => {
 
 		expect(response.statusCode).toBe(204);
 		expect(mockService.removeEntry).toHaveBeenCalledWith(
+			"user-1",
 			"00000000-0000-0000-0000-000000000001",
 		);
 	});

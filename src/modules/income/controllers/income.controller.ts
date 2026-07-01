@@ -40,7 +40,9 @@ export class IncomeController {
 		}>,
 		reply: FastifyReply,
 	) => {
+		const userId = request.authUser.id;
 		const result = await this.service.updateEntry(
+			userId,
 			request.params.id,
 			request.body,
 		);
@@ -51,7 +53,8 @@ export class IncomeController {
 		request: FastifyRequest<{ Params: IncomeParams }>,
 		reply: FastifyReply,
 	) => {
-		await this.service.removeEntry(request.params.id);
+		const userId = request.authUser.id;
+		await this.service.removeEntry(userId, request.params.id);
 		return reply.status(204).send();
 	};
 }

@@ -68,6 +68,7 @@ export class OverviewRepository {
 			.where(
 				and(
 					eq(income.userId, userId),
+					eq(income.status, "received"),
 					gte(income.date, start),
 					lt(income.date, end),
 				),
@@ -105,6 +106,7 @@ export class OverviewRepository {
 				.where(
 					and(
 						eq(income.userId, userId),
+						eq(income.status, "received"),
 						gte(income.date, start),
 						lt(income.date, end),
 					),
@@ -184,6 +186,7 @@ export class OverviewRepository {
 			.where(
 				and(
 					eq(income.userId, userId),
+					eq(income.status, "received"),
 					gte(income.date, start),
 					lt(income.date, end),
 				),
