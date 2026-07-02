@@ -4,6 +4,7 @@ import type { SettingsController } from "@/modules/settings/controllers/settings
 import {
 	ChangePasswordBodySchema,
 	SettingsResponseSchema,
+	UpdateCardBodySchema,
 	UpdateNotificationsBodySchema,
 	UpdatePreferencesBodySchema,
 	UpdateProfileBodySchema,
@@ -63,6 +64,19 @@ export async function settingsRoutes(fastify: FastifyInstance) {
 			},
 		},
 		controller.updateNotifications,
+	);
+
+	fastify.patch(
+		"/card",
+		{
+			schema: {
+				tags: ["settings"],
+				summary: "Configurar cartão (fechamento/vencimento)",
+				body: UpdateCardBodySchema,
+				response: { 204: { type: "null" } },
+			},
+		},
+		controller.updateCard,
 	);
 
 	fastify.patch(

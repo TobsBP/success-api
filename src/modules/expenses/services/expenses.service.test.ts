@@ -7,7 +7,9 @@ describe("ExpensesService", () => {
 	let service: ExpensesService;
 	let mockRepo: {
 		findByMonth: Mock;
+		findAll: Mock;
 		findById: Mock;
+		getCardConfig: Mock;
 		create: Mock;
 		update: Mock;
 		remove: Mock;
@@ -28,7 +30,9 @@ describe("ExpensesService", () => {
 	beforeEach(() => {
 		mockRepo = {
 			findByMonth: vi.fn(),
+			findAll: vi.fn(),
 			findById: vi.fn(),
+			getCardConfig: vi.fn().mockResolvedValue(null),
 			create: vi.fn(),
 			update: vi.fn(),
 			remove: vi.fn(),
@@ -37,6 +41,17 @@ describe("ExpensesService", () => {
 		};
 		service = new ExpensesService({
 			expensesRepository: mockRepo as unknown as IExpensesRepository,
+		});
+	});
+
+	describe("listAll", () => {
+		it("deve retornar todas as despesas do usuário", async () => {
+			mockRepo.findAll.mockResolvedValue([sampleEntry]);
+
+			const result = await service.listAll("user-1");
+
+			expect(result).toEqual([sampleEntry]);
+			expect(mockRepo.findAll).toHaveBeenCalledWith("user-1");
 		});
 	});
 
@@ -135,13 +150,13 @@ describe("ExpensesService", () => {
 			expect(dates).toEqual(["2024-05-10", "2024-06-10", "2024-07-10"]);
 		});
 
-		it("deve reconhecer a categoria de forma case-insensitive e virar o ano", async () => {
+		it("deve virar o ano ao replicar e clampar o último dia do mês", async () => {
 			mockRepo.create.mockResolvedValue(sampleEntry);
 
 			await service.createEntry("user-1", {
 				date: "2024-12-31",
 				description: "Spotify",
-				category: "assinatura",
+				category: "Assinaturas",
 				amount: 2000,
 				recurringMonths: 2,
 			});
@@ -151,27 +166,28 @@ describe("ExpensesService", () => {
 			expect(dates).toEqual(["2024-12-31", "2025-01-31", "2025-02-28"]);
 		});
 
-		it("não deve replicar quando a categoria não é assinatura", async () => {
+		it("deve replicar para qualquer categoria (recorrência desacoplada)", async () => {
 			mockRepo.create.mockResolvedValue(sampleEntry);
 
 			await service.createEntry("user-1", {
 				date: "2024-05-10",
-				description: "Supermercado",
-				category: "Alimentação",
-				amount: 10000,
+				description: "Consórcio Honda",
+				category: "Moto",
+				amount: 47023,
 				recurringMonths: 3,
 			});
 
-			expect(mockRepo.create).toHaveBeenCalledTimes(1);
+			// original + 3 cópias, mesmo sem categoria "assinatura"
+			expect(mockRepo.create).toHaveBeenCalledTimes(4);
 		});
 
-		it("deve parcelar despesas NuBank dividindo o valor e distribuindo o resto", async () => {
+		it("deve parcelar para qualquer categoria dividindo o valor e distribuindo o resto", async () => {
 			mockRepo.create.mockResolvedValue(sampleEntry);
 
 			await service.createEntry("user-1", {
 				date: "2024-05-10",
 				description: "Notebook",
-				category: "NuBank",
+				category: "Eletrônicos",
 				amount: 10000,
 				installments: 3,
 			});
@@ -198,7 +214,7 @@ describe("ExpensesService", () => {
 			await service.createEntry("user-1", {
 				date: "2024-05-10",
 				description: "Fone",
-				category: "NuBank",
+				category: "Eletrônicos",
 				amount: 5000,
 				installments: 1,
 			});
@@ -210,19 +226,87 @@ describe("ExpensesService", () => {
 			expect(mockRepo.create.mock.calls[0][0].amount).toBe(5000);
 			expect(mockRepo.create.mock.calls[0][0].description).toBe("Fone");
 		});
+
+		it("no crédito com cartão configurado, billingDate = vencimento da fatura", async () => {
+			mockRepo.getCardConfig.mockResolvedValue({ closingDay: 3, dueDay: 10 });
+			mockRepo.create.mockResolvedValue(sampleEntry);
+
+			await service.createEntry("user-1", {
+				date: "2026-07-15",
+				description: "Mercado",
+				category: "Alimentação",
+				amount: 5000,
+				paymentMethod: "credit",
+			});
+
+			expect(mockRepo.create).toHaveBeenCalledWith(
+				expect.objectContaining({ billingDate: "2026-08-10" }),
+			);
+		});
+
+		it("sem cartão ou fora do crédito, billingDate = data da compra", async () => {
+			mockRepo.getCardConfig.mockResolvedValue(null);
+			mockRepo.create.mockResolvedValue(sampleEntry);
+
+			await service.createEntry("user-1", {
+				date: "2026-07-15",
+				description: "Mercado",
+				category: "Alimentação",
+				amount: 5000,
+				paymentMethod: "debit",
+			});
+
+			expect(mockRepo.create).toHaveBeenCalledWith(
+				expect.objectContaining({ billingDate: "2026-07-15" }),
+			);
+		});
+
+		it("deve propagar o paymentMethod para todas as parcelas", async () => {
+			mockRepo.create.mockResolvedValue(sampleEntry);
+
+			await service.createEntry("user-1", {
+				date: "2024-05-10",
+				description: "Notebook",
+				category: "Eletrônicos",
+				amount: 10000,
+				installments: 3,
+				paymentMethod: "credit",
+			});
+
+			const methods = mockRepo.create.mock.calls.map((c) => c[0].paymentMethod);
+			expect(methods).toEqual(["credit", "credit", "credit"]);
+		});
 	});
 
 	describe("updateEntry", () => {
 		it("deve atualizar e retornar a entrada", async () => {
 			mockRepo.update.mockResolvedValue(sampleEntry);
-			const result = await service.updateEntry("uuid-1", { amount: 20000 });
+			const result = await service.updateEntry("user-1", "uuid-1", {
+				amount: 20000,
+			});
 			expect(result).toEqual(sampleEntry);
 		});
 
 		it("deve lançar NotFoundError se a entrada não existir", async () => {
 			mockRepo.update.mockResolvedValue(null);
-			await expect(service.updateEntry("uuid-1", {})).rejects.toThrow(
+			await expect(service.updateEntry("user-1", "uuid-1", {})).rejects.toThrow(
 				NotFoundError,
+			);
+		});
+
+		it("deve recalcular a billingDate ao mudar a data no crédito", async () => {
+			mockRepo.getCardConfig.mockResolvedValue({ closingDay: 3, dueDay: 10 });
+			mockRepo.findById.mockResolvedValue({
+				...sampleEntry,
+				paymentMethod: "credit",
+			});
+			mockRepo.update.mockResolvedValue(sampleEntry);
+
+			await service.updateEntry("user-1", "uuid-1", { date: "2026-07-15" });
+
+			expect(mockRepo.update).toHaveBeenCalledWith(
+				"uuid-1",
+				expect.objectContaining({ billingDate: "2026-08-10" }),
 			);
 		});
 	});

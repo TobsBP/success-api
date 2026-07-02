@@ -16,28 +16,45 @@ export const DeltaSchema = Type.Object({
 	comparisonLabel: Type.Optional(Type.String()),
 });
 
+export const PaymentMethodSchema = Type.Union([
+	Type.Literal("credit"),
+	Type.Literal("debit"),
+	Type.Literal("pix"),
+	Type.Literal("cash"),
+	Type.Literal("boleto"),
+]);
+
 export const ExpenseEntrySchema = Type.Object({
 	id: UuidSchema,
 	date: Type.String({ format: "date" }),
 	description: Type.String(),
 	category: Type.String(),
+	paymentMethod: Type.Optional(PaymentMethodSchema),
 	amount: Type.Number(),
+	// Data em que a despesa pesa no fluxo de caixa (vencimento da fatura para
+	// crédito; igual a `date` nos demais meios).
+	billingDate: Type.String({ format: "date" }),
 	createdAt: Type.String({ format: "date-time" }),
 	updatedAt: Type.String({ format: "date-time" }),
 });
+
+export const ExpenseListResponseSchema = Type.Array(ExpenseEntrySchema);
 
 export const CreateExpenseBodySchema = Type.Object({
 	date: Type.String({ format: "date" }),
 	description: Type.String(),
 	category: Type.String(),
+	// Meio de pagamento da compra (crédito/NuBank, débito, pix, dinheiro, boleto).
+	// Independente da categoria.
+	paymentMethod: Type.Optional(PaymentMethodSchema),
 	amount: Type.Number(),
-	// Para categoria "Assinatura": quantos meses futuros replicar a despesa
-	// (ex.: 2 gera a despesa do mês seguinte e do subsequente). Ignorado para
-	// as demais categorias.
+	// Quantos meses futuros replicar a despesa com o valor cheio (ex.: 2 gera a
+	// despesa do mês seguinte e do subsequente). Útil para assinaturas. Vale para
+	// qualquer categoria.
 	recurringMonths: Type.Optional(Type.Integer({ minimum: 0, maximum: 12 })),
-	// Para categoria "NuBank": divide `amount` (valor total) em N parcelas
-	// mensais, uma despesa por mês a partir de `date`. Ignorado nas demais
-	// categorias.
+	// Divide `amount` (valor total) em N parcelas mensais, uma despesa por mês a
+	// partir de `date`. Útil para compras parceladas no crédito. Vale para
+	// qualquer categoria.
 	installments: Type.Optional(Type.Integer({ minimum: 1, maximum: 48 })),
 });
 
@@ -81,6 +98,7 @@ export const ExpensesResponseSchema = Type.Object({
 	),
 });
 
+export type PaymentMethod = Static<typeof PaymentMethodSchema>;
 export type ExpenseEntryDto = Static<typeof ExpenseEntrySchema>;
 export type CreateExpenseBody = Static<typeof CreateExpenseBodySchema>;
 export type UpdateExpenseBody = Static<typeof UpdateExpenseBodySchema>;

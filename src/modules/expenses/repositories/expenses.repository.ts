@@ -1,12 +1,17 @@
-import { and, eq, gte, lt } from "drizzle-orm";
+import { and, desc, eq, gte, lt } from "drizzle-orm";
 import type { Db } from "@/infra/db/client.js";
-import { expenses, expensesLimit } from "@/infra/db/schema/index.js";
-import type { IExpensesRepository } from "@/modules/expenses/interfaces/expenses.repository.interface.js";
+import {
+	expenses,
+	expensesLimit,
+	userSettings,
+} from "@/infra/db/schema/index.js";
 import type {
-	CreateExpenseBody,
-	ExpenseEntryDto,
-	UpdateExpenseBody,
-} from "@/modules/expenses/schemas/index.js";
+	CardConfig,
+	CreateExpenseData,
+	IExpensesRepository,
+	UpdateExpenseData,
+} from "@/modules/expenses/interfaces/expenses.repository.interface.js";
+import type { ExpenseEntryDto } from "@/modules/expenses/schemas/index.js";
 
 function parseLocalDate(dateStr: string): Date {
 	const [year, month, day] = dateStr.split("-").map(Number);
@@ -33,10 +38,32 @@ export class ExpensesRepository implements IExpensesRepository {
 			.where(
 				and(
 					eq(expenses.userId, userId),
-					gte(expenses.date, start),
-					lt(expenses.date, end),
+					// Bucketiza pela data da fatura (crédito cai no mês do vencimento).
+					gte(expenses.billingDate, start),
+					lt(expenses.billingDate, end),
 				),
 			);
+		return rows.map((r) => this.toDto(r));
+	}
+
+	async getCardConfig(userId: string): Promise<CardConfig | null> {
+		const [row] = await this.db
+			.select({
+				closingDay: userSettings.cardClosingDay,
+				dueDay: userSettings.cardDueDay,
+			})
+			.from(userSettings)
+			.where(eq(userSettings.userId, userId));
+		if (!row || row.closingDay == null || row.dueDay == null) return null;
+		return { closingDay: row.closingDay, dueDay: row.dueDay };
+	}
+
+	async findAll(userId: string): Promise<ExpenseEntryDto[]> {
+		const rows = await this.db
+			.select()
+			.from(expenses)
+			.where(eq(expenses.userId, userId))
+			.orderBy(desc(expenses.date));
 		return rows.map((r) => this.toDto(r));
 	}
 
@@ -48,9 +75,7 @@ export class ExpensesRepository implements IExpensesRepository {
 		return row ? this.toDto(row) : null;
 	}
 
-	async create(
-		data: CreateExpenseBody & { userId: string },
-	): Promise<ExpenseEntryDto> {
+	async create(data: CreateExpenseData): Promise<ExpenseEntryDto> {
 		const [row] = await this.db
 			.insert(expenses)
 			.values({
@@ -58,7 +83,9 @@ export class ExpensesRepository implements IExpensesRepository {
 				date: parseLocalDate(data.date),
 				description: data.description,
 				category: data.category,
+				paymentMethod: data.paymentMethod ?? "debit",
 				amount: String(data.amount),
+				billingDate: parseLocalDate(data.billingDate),
 			})
 			.returning();
 		return this.toDto(row);
@@ -66,13 +93,19 @@ export class ExpensesRepository implements IExpensesRepository {
 
 	async update(
 		id: string,
-		data: UpdateExpenseBody,
+		data: UpdateExpenseData,
 	): Promise<ExpenseEntryDto | null> {
 		const set = {
 			...(data.date !== undefined && { date: parseLocalDate(data.date) }),
 			...(data.description !== undefined && { description: data.description }),
 			...(data.category !== undefined && { category: data.category }),
+			...(data.paymentMethod !== undefined && {
+				paymentMethod: data.paymentMethod,
+			}),
 			...(data.amount !== undefined && { amount: String(data.amount) }),
+			...(data.billingDate !== undefined && {
+				billingDate: parseLocalDate(data.billingDate),
+			}),
 			updatedAt: new Date(),
 		};
 
@@ -114,7 +147,9 @@ export class ExpensesRepository implements IExpensesRepository {
 			date: row.date.toISOString().split("T")[0],
 			description: row.description,
 			category: row.category,
+			paymentMethod: row.paymentMethod as ExpenseEntryDto["paymentMethod"],
 			amount: Number(row.amount),
+			billingDate: row.billingDate.toISOString().split("T")[0],
 			createdAt: row.createdAt.toISOString(),
 			updatedAt: row.updatedAt.toISOString(),
 		};

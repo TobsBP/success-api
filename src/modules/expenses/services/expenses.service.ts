@@ -1,20 +1,38 @@
 import { NotFoundError } from "@/core/errors/index.js";
-import type { IExpensesRepository } from "@/modules/expenses/interfaces/expenses.repository.interface.js";
+import type {
+	CardConfig,
+	IExpensesRepository,
+	UpdateExpenseData,
+} from "@/modules/expenses/interfaces/expenses.repository.interface.js";
 import type { IExpensesService } from "@/modules/expenses/interfaces/expenses.service.interface.js";
 import type {
 	CreateExpenseBody,
 	ExpenseEntryDto,
 	ExpensesResponseDto,
+	PaymentMethod,
 	UpdateExpenseBody,
 } from "@/modules/expenses/schemas/index.js";
+import { computeInvoiceDueDate } from "./invoice.js";
+
+/**
+ * Data em que a despesa pesa no fluxo de caixa: para compras no crédito com
+ * cartão configurado, é o vencimento da fatura; caso contrário, a própria data.
+ */
+function resolveBillingDate(
+	date: string,
+	paymentMethod: PaymentMethod | undefined,
+	card: CardConfig | null,
+): string {
+	if (paymentMethod === "credit" && card) {
+		return computeInvoiceDueDate(date, card.closingDay, card.dueDay);
+	}
+	return date;
+}
 
 function getCurrentMonth(): string {
 	const now = new Date();
 	return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
-
-const SUBSCRIPTION_CATEGORY = "assinatura";
-const CARD_CATEGORY = "nubank";
 
 /**
  * Divide um valor total inteiro em `parts` parcelas cujo somatório é exatamente
@@ -120,46 +138,62 @@ export class ExpensesService implements IExpensesService {
 		};
 	}
 
+	async listAll(userId: string): Promise<ExpenseEntryDto[]> {
+		return this.repo.findAll(userId);
+	}
+
 	async createEntry(
 		userId: string,
 		data: CreateExpenseBody,
 	): Promise<ExpenseEntryDto> {
 		const { recurringMonths, installments, ...expense } = data;
-		const category = expense.category.trim().toLowerCase();
+		const card = await this.repo.getCardConfig(userId);
 
-		// NuBank: divide o valor total em N parcelas mensais (a primeira já no
-		// mês de `date`). Cada parcela é uma despesa própria.
-		if (category === CARD_CATEGORY && installments && installments > 1) {
+		// Parcelamento: divide o valor total em N parcelas mensais (a primeira já
+		// no mês de `date`). Cada parcela é uma despesa própria. Vale para
+		// qualquer categoria.
+		if (installments && installments > 1) {
 			const parcels = splitAmount(expense.amount, installments);
-			const entries = parcels.map((amount, index) => ({
-				...expense,
-				userId,
-				amount,
-				date: addMonths(expense.date, index),
-				description: `${expense.description} (${index + 1}/${installments})`,
-			}));
+			const entries = parcels.map((amount, index) => {
+				const date = addMonths(expense.date, index);
+				return {
+					...expense,
+					userId,
+					amount,
+					date,
+					billingDate: resolveBillingDate(date, expense.paymentMethod, card),
+					description: `${expense.description} (${index + 1}/${installments})`,
+				};
+			});
 			const [first, ...rest] = entries;
 			const created = await this.repo.create(first);
 			await Promise.all(rest.map((parcel) => this.repo.create(parcel)));
 			return created;
 		}
 
-		const created = await this.repo.create({ ...expense, userId });
+		const created = await this.repo.create({
+			...expense,
+			userId,
+			billingDate: resolveBillingDate(
+				expense.date,
+				expense.paymentMethod,
+				card,
+			),
+		});
 
-		// Assinaturas se repetem: replica a despesa (valor cheio) nos próximos meses.
-		if (
-			category === SUBSCRIPTION_CATEGORY &&
-			recurringMonths &&
-			recurringMonths > 0
-		) {
+		// Recorrência: replica a despesa (valor cheio) nos próximos meses. Útil
+		// para assinaturas. Vale para qualquer categoria.
+		if (recurringMonths && recurringMonths > 0) {
 			await Promise.all(
-				Array.from({ length: recurringMonths }, (_, index) =>
-					this.repo.create({
+				Array.from({ length: recurringMonths }, (_, index) => {
+					const date = addMonths(expense.date, index + 1);
+					return this.repo.create({
 						...expense,
 						userId,
-						date: addMonths(expense.date, index + 1),
-					}),
-				),
+						date,
+						billingDate: resolveBillingDate(date, expense.paymentMethod, card),
+					});
+				}),
 			);
 		}
 
@@ -167,10 +201,23 @@ export class ExpensesService implements IExpensesService {
 	}
 
 	async updateEntry(
+		userId: string,
 		id: string,
 		data: UpdateExpenseBody,
 	): Promise<ExpenseEntryDto> {
-		const updated = await this.repo.update(id, data);
+		const patch: UpdateExpenseData = { ...data };
+
+		// Se a data ou o meio de pagamento mudarem, a fatura/vencimento pode mudar.
+		if (data.date !== undefined || data.paymentMethod !== undefined) {
+			const existing = await this.repo.findById(id);
+			if (!existing) throw new NotFoundError("Expense", id);
+			const date = data.date ?? existing.date;
+			const paymentMethod = data.paymentMethod ?? existing.paymentMethod;
+			const card = await this.repo.getCardConfig(userId);
+			patch.billingDate = resolveBillingDate(date, paymentMethod, card);
+		}
+
+		const updated = await this.repo.update(id, patch);
 		if (!updated) throw new NotFoundError("Expense", id);
 		return updated;
 	}

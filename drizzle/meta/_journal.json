@@ -29,6 +29,27 @@
 			"when": 1782442876421,
 			"tag": "0003_orange_baron_zemo",
 			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "7",
+			"when": 1782947180134,
+			"tag": "0004_nebulous_microchip",
+			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "7",
+			"when": 1782947344838,
+			"tag": "0005_thankful_wasp",
+			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "7",
+			"when": 1782949038872,
+			"tag": "0006_empty_lila_cheney",
+			"breakpoints": true
 		}
 	]
 }

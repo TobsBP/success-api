@@ -7,6 +7,7 @@ import type { ISettingsService } from "@/modules/settings/interfaces/settings.se
 import type {
 	ChangePasswordBody,
 	SettingsResponseDto,
+	UpdateCardBody,
 	UpdateNotificationsBody,
 	UpdatePreferencesBody,
 	UpdateProfileBody,
@@ -64,6 +65,10 @@ export class SettingsService implements ISettingsService {
 				dueDateAlerts: row.dueDateAlerts,
 				goalsAchieved: row.goalsAchieved,
 			},
+			card: {
+				closingDay: row.cardClosingDay ?? undefined,
+				dueDay: row.cardDueDay ?? undefined,
+			},
 			appInfo: {
 				version: "1.0.0",
 				build: "1",
@@ -108,6 +113,14 @@ export class SettingsService implements ISettingsService {
 			...(data.goalsAchieved !== undefined && {
 				goalsAchieved: data.goalsAchieved,
 			}),
+		});
+		await this.cache.del(cacheKey(userId));
+	}
+
+	async updateCard(userId: string, data: UpdateCardBody): Promise<void> {
+		await this.repo.upsert(userId, {
+			...(data.closingDay !== undefined && { cardClosingDay: data.closingDay }),
+			...(data.dueDay !== undefined && { cardDueDay: data.dueDay }),
 		});
 		await this.cache.del(cacheKey(userId));
 	}

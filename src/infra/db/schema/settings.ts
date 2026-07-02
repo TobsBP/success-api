@@ -1,5 +1,6 @@
 import {
 	boolean,
+	integer,
 	pgEnum,
 	pgTable,
 	timestamp,
@@ -23,6 +24,10 @@ export const userSettings = pgTable("user_settings", {
 	goalsAchieved: boolean("goals_achieved").notNull().default(false),
 	twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
 	twoFactorMethod: varchar("two_factor_method", { length: 50 }),
+	// Cartão de crédito: dia de fechamento e de vencimento da fatura (1-31).
+	// Usados para calcular em qual fatura cai uma compra no crédito.
+	cardClosingDay: integer("card_closing_day"),
+	cardDueDay: integer("card_due_day"),
 	passwordLastChanged: varchar("password_last_changed", { length: 50 })
 		.notNull()
 		.default(""),

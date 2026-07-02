@@ -24,6 +24,8 @@ const makeDefaultRow = (overrides = {}) => ({
 	goalsAchieved: false,
 	twoFactorEnabled: false,
 	twoFactorMethod: null,
+	cardClosingDay: null,
+	cardDueDay: null,
 	passwordLastChanged: "",
 	createdAt: new Date(),
 	updatedAt: new Date(),

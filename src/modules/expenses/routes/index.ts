@@ -4,6 +4,7 @@ import type { ExpensesController } from "@/modules/expenses/controllers/expenses
 import {
 	CreateExpenseBodySchema,
 	ExpenseEntrySchema,
+	ExpenseListResponseSchema,
 	ExpenseParamsSchema,
 	ExpensesResponseSchema,
 	LimitBodySchema,
@@ -17,16 +18,28 @@ export async function expensesRoutes(fastify: FastifyInstance) {
 		container.resolve<ExpensesController>("expensesController");
 
 	fastify.get(
-		"",
+		"/overview",
 		{
 			schema: {
 				tags: ["expenses"],
-				summary: "Despesas do mês",
+				summary: "Overview de despesas",
 				querystring: MonthQuerySchema,
 				response: { 200: ExpensesResponseSchema },
 			},
 		},
-		controller.list,
+		controller.overview,
+	);
+
+	fastify.get(
+		"/entries",
+		{
+			schema: {
+				tags: ["expenses"],
+				summary: "Listar todas as despesas",
+				response: { 200: ExpenseListResponseSchema },
+			},
+		},
+		controller.listAll,
 	);
 
 	fastify.post(

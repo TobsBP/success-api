@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import type { ISettingsService } from "@/modules/settings/interfaces/settings.service.interface.js";
 import type {
 	ChangePasswordBody,
+	UpdateCardBody,
 	UpdateNotificationsBody,
 	UpdatePreferencesBody,
 	UpdateProfileBody,
@@ -47,6 +48,15 @@ export class SettingsController {
 	) => {
 		const userId = request.authUser.id;
 		await this.service.updateNotifications(userId, request.body);
+		return reply.status(204).send();
+	};
+
+	updateCard = async (
+		request: FastifyRequest<{ Body: UpdateCardBody }>,
+		reply: FastifyReply,
+	) => {
+		const userId = request.authUser.id;
+		await this.service.updateCard(userId, request.body);
 		return reply.status(204).send();
 	};
 

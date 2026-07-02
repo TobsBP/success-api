@@ -15,6 +15,7 @@ describe("Expenses Routes", () => {
 	let fastify: FastifyInstance;
 	let mockService: {
 		getMonthData: Mock;
+		listAll: Mock;
 		createEntry: Mock;
 		updateEntry: Mock;
 		removeEntry: Mock;
@@ -55,7 +56,9 @@ describe("Expenses Routes", () => {
 		date: "2024-05-10",
 		description: "Supermercado",
 		category: "Alimentação",
+		paymentMethod: "credit",
 		amount: 10000,
+		billingDate: "2024-06-10",
 		createdAt: new Date().toISOString(),
 		updatedAt: new Date().toISOString(),
 	};
@@ -64,6 +67,7 @@ describe("Expenses Routes", () => {
 		fastify = Fastify();
 		mockService = {
 			getMonthData: vi.fn(),
+			listAll: vi.fn(),
 			createEntry: vi.fn(),
 			updateEntry: vi.fn(),
 			removeEntry: vi.fn(),
@@ -75,7 +79,8 @@ describe("Expenses Routes", () => {
 			expensesService: mockService as unknown as IExpensesService,
 		});
 
-		fastify.get("/expenses", controller.list);
+		fastify.get("/expenses/overview", controller.overview);
+		fastify.get("/expenses/entries", controller.listAll);
 		fastify.post("/expenses/entries", controller.create);
 		fastify.patch("/expenses/entries/:id", controller.update);
 		fastify.delete("/expenses/entries/:id", controller.remove);
@@ -89,17 +94,30 @@ describe("Expenses Routes", () => {
 		await fastify.close();
 	});
 
-	it("GET /expenses deve retornar os dados do mês", async () => {
+	it("GET /expenses/overview deve retornar os dados do mês", async () => {
 		mockService.getMonthData.mockResolvedValue(monthData);
 
 		const response = await fastify.inject({
 			method: "GET",
-			url: "/expenses?month=2024-05",
+			url: "/expenses/overview?month=2024-05",
 		});
 
 		expect(response.statusCode).toBe(200);
 		expect(response.json()).toEqual(monthData);
 		expect(mockService.getMonthData).toHaveBeenCalledWith("", "2024-05");
+	});
+
+	it("GET /expenses/entries deve listar todas as despesas", async () => {
+		mockService.listAll.mockResolvedValue([entry]);
+
+		const response = await fastify.inject({
+			method: "GET",
+			url: "/expenses/entries",
+		});
+
+		expect(response.statusCode).toBe(200);
+		expect(response.json()).toEqual([entry]);
+		expect(mockService.listAll).toHaveBeenCalledWith("");
 	});
 
 	it("POST /expenses/entries deve criar uma entrada", async () => {
@@ -112,6 +130,7 @@ describe("Expenses Routes", () => {
 				date: "2024-05-10",
 				description: "Supermercado",
 				category: "Alimentação",
+				paymentMethod: "credit",
 				amount: 10000,
 			},
 		});

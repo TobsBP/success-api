@@ -31,6 +31,10 @@ export const SettingsResponseSchema = Type.Object({
 		dueDateAlerts: Type.Boolean(),
 		goalsAchieved: Type.Boolean(),
 	}),
+	card: Type.Object({
+		closingDay: Type.Optional(Type.Integer()),
+		dueDay: Type.Optional(Type.Integer()),
+	}),
 	appInfo: Type.Object({
 		version: Type.String(),
 		build: Type.String(),
@@ -68,6 +72,13 @@ export const UpdateNotificationsBodySchema = Type.Partial(
 	}),
 );
 
+export const UpdateCardBodySchema = Type.Partial(
+	Type.Object({
+		closingDay: Type.Integer({ minimum: 1, maximum: 31 }),
+		dueDay: Type.Integer({ minimum: 1, maximum: 31 }),
+	}),
+);
+
 export const UpdateTwoFactorBodySchema = Type.Object({
 	enabled: Type.Boolean(),
 	method: Type.Optional(Type.String()),
@@ -84,5 +95,6 @@ export type UpdatePreferencesBody = Static<typeof UpdatePreferencesBodySchema>;
 export type UpdateNotificationsBody = Static<
 	typeof UpdateNotificationsBodySchema
 >;
+export type UpdateCardBody = Static<typeof UpdateCardBodySchema>;
 export type UpdateTwoFactorBody = Static<typeof UpdateTwoFactorBodySchema>;
 export type ChangePasswordBody = Static<typeof ChangePasswordBodySchema>;

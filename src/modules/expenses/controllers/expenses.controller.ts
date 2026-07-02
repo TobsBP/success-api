@@ -15,7 +15,7 @@ export class ExpensesController {
 		this.service = expensesService;
 	}
 
-	list = async (
+	overview = async (
 		request: FastifyRequest<{ Querystring: MonthQuery }>,
 		reply: FastifyReply,
 	) => {
@@ -25,6 +25,13 @@ export class ExpensesController {
 			userId,
 			request.query.month ?? "",
 		);
+		return reply.send(result);
+	};
+
+	listAll = async (request: FastifyRequest, reply: FastifyReply) => {
+		// biome-ignore lint/suspicious/noExplicitAny: authUser é injetado pelo plugin firebase-auth
+		const userId = (request as any).authUser?.id ?? "";
+		const result = await this.service.listAll(userId);
 		return reply.send(result);
 	};
 
@@ -42,7 +49,10 @@ export class ExpensesController {
 		request: FastifyRequest<{ Params: ExpenseParams; Body: UpdateExpenseBody }>,
 		reply: FastifyReply,
 	) => {
+		// biome-ignore lint/suspicious/noExplicitAny: authUser é injetado pelo plugin firebase-auth
+		const userId = (request as any).authUser?.id ?? "";
 		const result = await this.service.updateEntry(
+			userId,
 			request.params.id,
 			request.body,
 		);

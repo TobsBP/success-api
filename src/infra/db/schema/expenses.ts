@@ -13,7 +13,14 @@ export const expenses = pgTable("expenses", {
 	date: timestamp("date").notNull(),
 	description: varchar("description", { length: 255 }).notNull(),
 	category: varchar("category", { length: 100 }).notNull(),
+	paymentMethod: varchar("payment_method", { length: 20 })
+		.notNull()
+		.default("debit"),
 	amount: numeric("amount").notNull(),
+	// Data em que a despesa efetivamente pesa no fluxo de caixa: para compras no
+	// crédito é o vencimento da fatura; para os demais meios é a própria `date`.
+	// Todo bucketização por mês (overview/reports/despesas) usa esta coluna.
+	billingDate: timestamp("billing_date").notNull(),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

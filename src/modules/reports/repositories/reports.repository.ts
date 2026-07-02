@@ -54,8 +54,8 @@ export class ReportsRepository {
 		// Busca despesas mensais (com filtro de categorias opcional)
 		const expenseConditions = [
 			eq(expenses.userId, userId),
-			gte(expenses.date, start),
-			lt(expenses.date, end),
+			gte(expenses.billingDate, start),
+			lt(expenses.billingDate, end),
 			...(categories && categories.length > 0
 				? [
 						sql`${expenses.category} = ANY(${sql.raw(`ARRAY[${categories.map((c) => `'${c}'`).join(",")}]`)})`,
@@ -65,19 +65,19 @@ export class ReportsRepository {
 
 		const expenseRows = await this.db
 			.select({
-				year: sql<number>`EXTRACT(YEAR FROM ${expenses.date})::int`,
-				month: sql<number>`EXTRACT(MONTH FROM ${expenses.date})::int`,
+				year: sql<number>`EXTRACT(YEAR FROM ${expenses.billingDate})::int`,
+				month: sql<number>`EXTRACT(MONTH FROM ${expenses.billingDate})::int`,
 				total: sum(expenses.amount),
 			})
 			.from(expenses)
 			.where(and(...expenseConditions))
 			.groupBy(
-				sql`EXTRACT(YEAR FROM ${expenses.date})`,
-				sql`EXTRACT(MONTH FROM ${expenses.date})`,
+				sql`EXTRACT(YEAR FROM ${expenses.billingDate})`,
+				sql`EXTRACT(MONTH FROM ${expenses.billingDate})`,
 			)
 			.orderBy(
-				sql`EXTRACT(YEAR FROM ${expenses.date})`,
-				sql`EXTRACT(MONTH FROM ${expenses.date})`,
+				sql`EXTRACT(YEAR FROM ${expenses.billingDate})`,
+				sql`EXTRACT(MONTH FROM ${expenses.billingDate})`,
 			);
 
 		// Combina resultados
@@ -121,8 +121,8 @@ export class ReportsRepository {
 	): Promise<ReportCategoryRow[]> {
 		const conditions = [
 			eq(expenses.userId, userId),
-			gte(expenses.date, start),
-			lt(expenses.date, end),
+			gte(expenses.billingDate, start),
+			lt(expenses.billingDate, end),
 			...(categories && categories.length > 0
 				? [
 						sql`${expenses.category} = ANY(${sql.raw(`ARRAY[${categories.map((c) => `'${c}'`).join(",")}]`)})`,

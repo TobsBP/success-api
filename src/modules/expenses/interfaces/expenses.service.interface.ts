@@ -7,11 +7,16 @@ import type {
 
 export interface IExpensesService {
 	getMonthData(userId: string, month: string): Promise<ExpensesResponseDto>;
+	listAll(userId: string): Promise<ExpenseEntryDto[]>;
 	createEntry(
 		userId: string,
 		data: CreateExpenseBody,
 	): Promise<ExpenseEntryDto>;
-	updateEntry(id: string, data: UpdateExpenseBody): Promise<ExpenseEntryDto>;
+	updateEntry(
+		userId: string,
+		id: string,
+		data: UpdateExpenseBody,
+	): Promise<ExpenseEntryDto>;
 	removeEntry(id: string): Promise<void>;
 	getLimit(userId: string): Promise<{ limit: number }>;
 	setLimit(userId: string, limit: number): Promise<{ limit: number }>;

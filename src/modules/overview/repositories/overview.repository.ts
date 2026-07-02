@@ -80,8 +80,8 @@ export class OverviewRepository {
 			.where(
 				and(
 					eq(expenses.userId, userId),
-					gte(expenses.date, start),
-					lt(expenses.date, end),
+					gte(expenses.billingDate, start),
+					lt(expenses.billingDate, end),
 				),
 			);
 
@@ -97,7 +97,7 @@ export class OverviewRepository {
 		end: Date,
 	): Promise<MonthlyTotals[]> {
 		const incomeMonth = sql<string>`to_char(${income.date}, 'YYYY-MM')`;
-		const expenseMonth = sql<string>`to_char(${expenses.date}, 'YYYY-MM')`;
+		const expenseMonth = sql<string>`to_char(${expenses.billingDate}, 'YYYY-MM')`;
 
 		const [incomeRows, expenseRows] = await Promise.all([
 			this.db
@@ -118,8 +118,8 @@ export class OverviewRepository {
 				.where(
 					and(
 						eq(expenses.userId, userId),
-						gte(expenses.date, start),
-						lt(expenses.date, end),
+						gte(expenses.billingDate, start),
+						lt(expenses.billingDate, end),
 					),
 				)
 				.groupBy(expenseMonth),
@@ -159,8 +159,8 @@ export class OverviewRepository {
 			.where(
 				and(
 					eq(expenses.userId, userId),
-					gte(expenses.date, start),
-					lt(expenses.date, end),
+					gte(expenses.billingDate, start),
+					lt(expenses.billingDate, end),
 				),
 			)
 			.groupBy(expenses.category)
@@ -255,8 +255,8 @@ export class OverviewRepository {
 			.where(
 				and(
 					eq(expenses.userId, userId),
-					gte(expenses.date, start),
-					lt(expenses.date, end),
+					gte(expenses.billingDate, start),
+					lt(expenses.billingDate, end),
 				),
 			)
 			.orderBy(desc(expenses.amount))
