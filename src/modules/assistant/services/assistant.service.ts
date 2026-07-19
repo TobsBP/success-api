@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { NotFoundError } from "@/core/errors/index.js";
+import { AppError } from "@/core/errors/index.js";
 import type { CacheService } from "@/infra/cache/cache.service.js";
 import type { IAssistantService } from "@/modules/assistant/interfaces/assistant.service.interface.js";
 import type {
@@ -121,7 +121,13 @@ export class AssistantService implements IAssistantService {
 	): Promise<ExpenseEntryDto> {
 		const key = draftKey(userId, draftId);
 		const data = await this.cache.get<ExpenseDraftData>(key);
-		if (!data) throw new NotFoundError("Draft", draftId);
+		if (!data) {
+			throw new AppError(
+				"Esse rascunho expirou, me manda a mensagem de novo que eu preparo outro",
+				404,
+				"DRAFT_EXPIRED",
+			);
+		}
 
 		const created = await this.expensesService.createEntry(userId, data);
 		await this.cache.del(key);

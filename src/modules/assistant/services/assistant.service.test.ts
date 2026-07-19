@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { NotFoundError } from "@/core/errors/index.js";
+import { AppError } from "@/core/errors/index.js";
 import type { ILlmProvider } from "@/modules/assistant/interfaces/llm-provider.interface.js";
 import { AssistantService } from "@/modules/assistant/services/assistant.service.js";
 import type { IExpensesService } from "@/modules/expenses/interfaces/expenses.service.interface.js";
@@ -84,7 +84,7 @@ describe("AssistantService", () => {
 		expect(cache.del).toHaveBeenCalledWith("assistant:draft:user-1:draft-1");
 	});
 
-	it("confirmDraft: lança NotFoundError quando o rascunho expirou ou não existe", async () => {
+	it("confirmDraft: lança erro amigável quando o rascunho expirou ou não existe", async () => {
 		const cache = makeCache();
 		const service = new AssistantService({
 			llmProvider: {} as ILlmProvider,
@@ -94,6 +94,12 @@ describe("AssistantService", () => {
 
 		await expect(
 			service.confirmDraft("user-1", "unknown-draft"),
-		).rejects.toThrow(NotFoundError);
+		).rejects.toThrow(
+			new AppError(
+				"Esse rascunho expirou, me manda a mensagem de novo que eu preparo outro",
+				404,
+				"DRAFT_EXPIRED",
+			),
+		);
 	});
 });
