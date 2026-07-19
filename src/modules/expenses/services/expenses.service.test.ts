@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { NotFoundError } from "@/core/errors/index.js";
+import type { CacheService } from "@/infra/cache/cache.service.js";
 import type { IExpensesRepository } from "@/modules/expenses/interfaces/expenses.repository.interface.js";
 import { ExpensesService } from "./expenses.service.js";
 
@@ -16,6 +17,7 @@ describe("ExpensesService", () => {
 		getLimit: Mock;
 		setLimit: Mock;
 	};
+	let mockCache: { delByPattern: Mock };
 
 	const sampleEntry = {
 		id: "550e8400-e29b-41d4-a716-446655440000",
@@ -39,8 +41,10 @@ describe("ExpensesService", () => {
 			getLimit: vi.fn(),
 			setLimit: vi.fn(),
 		};
+		mockCache = { delByPattern: vi.fn() };
 		service = new ExpensesService({
 			expensesRepository: mockRepo as unknown as IExpensesRepository,
+			cache: mockCache as unknown as CacheService,
 		});
 	});
 
@@ -316,13 +320,16 @@ describe("ExpensesService", () => {
 			mockRepo.findById.mockResolvedValue(sampleEntry);
 			mockRepo.remove.mockResolvedValue(undefined);
 
-			await expect(service.removeEntry("uuid-1")).resolves.toBeUndefined();
+			await expect(
+				service.removeEntry("user-1", "uuid-1"),
+			).resolves.toBeUndefined();
 			expect(mockRepo.remove).toHaveBeenCalledWith("uuid-1");
+			expect(mockCache.delByPattern).toHaveBeenCalledWith("overview:user-1:*");
 		});
 
 		it("deve lançar NotFoundError se a entrada não existir", async () => {
 			mockRepo.findById.mockResolvedValue(null);
-			await expect(service.removeEntry("uuid-1")).rejects.toThrow(
+			await expect(service.removeEntry("user-1", "uuid-1")).rejects.toThrow(
 				NotFoundError,
 			);
 		});

@@ -17,7 +17,7 @@ export interface IExpensesService {
 		id: string,
 		data: UpdateExpenseBody,
 	): Promise<ExpenseEntryDto>;
-	removeEntry(id: string): Promise<void>;
+	removeEntry(userId: string, id: string): Promise<void>;
 	getLimit(userId: string): Promise<{ limit: number }>;
 	setLimit(userId: string, limit: number): Promise<{ limit: number }>;
 }

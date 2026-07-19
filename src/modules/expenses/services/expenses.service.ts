@@ -1,4 +1,5 @@
 import { NotFoundError } from "@/core/errors/index.js";
+import type { CacheService } from "@/infra/cache/cache.service.js";
 import type {
 	CardConfig,
 	IExpensesRepository,
@@ -67,11 +68,14 @@ function addMonths(dateStr: string, months: number): string {
 
 export class ExpensesService implements IExpensesService {
 	private repo: IExpensesRepository;
+	private cache: CacheService;
 
 	constructor({
 		expensesRepository,
-	}: { expensesRepository: IExpensesRepository }) {
+		cache,
+	}: { expensesRepository: IExpensesRepository; cache: CacheService }) {
 		this.repo = expensesRepository;
+		this.cache = cache;
 	}
 
 	async getMonthData(
@@ -168,6 +172,7 @@ export class ExpensesService implements IExpensesService {
 			const [first, ...rest] = entries;
 			const created = await this.repo.create(first);
 			await Promise.all(rest.map((parcel) => this.repo.create(parcel)));
+			await this.cache.delByPattern(`overview:${userId}:*`);
 			return created;
 		}
 
@@ -197,6 +202,7 @@ export class ExpensesService implements IExpensesService {
 			);
 		}
 
+		await this.cache.delByPattern(`overview:${userId}:*`);
 		return created;
 	}
 
@@ -219,13 +225,15 @@ export class ExpensesService implements IExpensesService {
 
 		const updated = await this.repo.update(id, patch);
 		if (!updated) throw new NotFoundError("Expense", id);
+		await this.cache.delByPattern(`overview:${userId}:*`);
 		return updated;
 	}
 
-	async removeEntry(id: string): Promise<void> {
+	async removeEntry(userId: string, id: string): Promise<void> {
 		const entry = await this.repo.findById(id);
 		if (!entry) throw new NotFoundError("Expense", id);
 		await this.repo.remove(id);
+		await this.cache.delByPattern(`overview:${userId}:*`);
 	}
 
 	async getLimit(userId: string): Promise<{ limit: number }> {

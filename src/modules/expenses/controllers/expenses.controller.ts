@@ -63,7 +63,9 @@ export class ExpensesController {
 		request: FastifyRequest<{ Params: ExpenseParams }>,
 		reply: FastifyReply,
 	) => {
-		await this.service.removeEntry(request.params.id);
+		// biome-ignore lint/suspicious/noExplicitAny: authUser é injetado pelo plugin firebase-auth
+		const userId = (request as any).authUser?.id ?? "";
+		await this.service.removeEntry(userId, request.params.id);
 		return reply.status(204).send();
 	};
 
