@@ -20,10 +20,12 @@
 		"prepare": "husky"
 	},
 	"dependencies": {
+		"@anthropic-ai/sdk": "^0.112.3",
 		"@fastify/cors": "^11.2.0",
 		"@fastify/helmet": "^13.0.2",
 		"@fastify/rate-limit": "^11.0.0",
 		"@fastify/swagger": "^9.0.0",
+		"@google/genai": "^2.12.0",
 		"@scalar/fastify-api-reference": "^1.25.0",
 		"@sentry/node": "^10.59.0",
 		"@sinclair/typebox": "^0.34.49",

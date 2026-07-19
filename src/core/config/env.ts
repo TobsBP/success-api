@@ -26,6 +26,15 @@ const envSchema = Type.Object({
 	// Rate limit global
 	RATE_LIMIT_MAX: Type.Number({ default: 50 }),
 	RATE_LIMIT_WINDOW: Type.String({ default: "1 minute" }),
+	// Qual provider de LLM o módulo assistant usa. Trocar é só mudar isso.
+	AI_PROVIDER: Type.Optional(
+		Type.Union([Type.Literal("claude"), Type.Literal("gemini")], {
+			default: "claude",
+		}),
+	),
+	// Opcional: se vazio, o assistente responde com erro claro ao ser chamado
+	ANTHROPIC_API_KEY: Type.Optional(Type.String()),
+	GEMINI_API_KEY: Type.Optional(Type.String()),
 	// Adicione outras variáveis conforme o projeto crescer
 });
 

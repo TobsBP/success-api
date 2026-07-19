@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { assistantRoutes } from "./assistant/routes/index.js";
 import { authRoutes } from "./auth/routes/index.js";
 import { categoriesRoutes } from "./categories/routes/index.js";
 import { expensesRoutes } from "./expenses/routes/index.js";
@@ -29,4 +30,5 @@ export async function appModules(fastify: FastifyInstance) {
 	await fastify.register(projectionsRoutes, { prefix: "/projections" });
 	await fastify.register(settingsRoutes, { prefix: "/settings" });
 	await fastify.register(categoriesRoutes, { prefix: "/categories" });
+	await fastify.register(assistantRoutes, { prefix: "/assistant" });
 }

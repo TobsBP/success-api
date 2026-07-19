@@ -1,7 +1,13 @@
 import { asClass, asValue, createContainer, InjectionMode } from "awilix";
+import { env } from "@/core/config/env.js";
 import { CacheService } from "@/infra/cache/cache.service.js";
 import { getRedis } from "@/infra/cache/client.js";
 import { getDb } from "@/infra/db/client.js";
+import { AssistantController } from "@/modules/assistant/controllers/assistant.controller.js";
+import type { ILlmProvider } from "@/modules/assistant/interfaces/llm-provider.interface.js";
+import { ClaudeProvider } from "@/modules/assistant/providers/claude.provider.js";
+import { GeminiProvider } from "@/modules/assistant/providers/gemini.provider.js";
+import { AssistantService } from "@/modules/assistant/services/assistant.service.js";
 import { AuthController } from "@/modules/auth/controllers/auth.controller.js";
 import { AuthService } from "@/modules/auth/services/auth.service.js";
 import { CategoriesController } from "@/modules/categories/controllers/categories.controller.js";
@@ -89,6 +95,14 @@ export function setupContainer() {
 		categoriesRepository: asClass(CategoriesRepository).singleton(),
 		categoriesService: asClass(CategoriesService).singleton(),
 		categoriesController: asClass(CategoriesController).singleton(),
+
+		// Assistant — trocar de LLM é mudar AI_PROVIDER no .env (claude/gemini) ou
+		// registrar aqui outra implementação de ILlmProvider.
+		llmProvider: asClass<ILlmProvider>(
+			env.AI_PROVIDER === "gemini" ? GeminiProvider : ClaudeProvider,
+		).singleton(),
+		assistantService: asClass(AssistantService).singleton(),
+		assistantController: asClass(AssistantController).singleton(),
 	});
 
 	return container;
