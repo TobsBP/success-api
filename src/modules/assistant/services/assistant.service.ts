@@ -4,7 +4,9 @@ import type { CacheService } from "@/infra/cache/cache.service.js";
 import type { IAssistantService } from "@/modules/assistant/interfaces/assistant.service.interface.js";
 import type {
 	ILlmProvider,
+	LlmMessage,
 	LlmTool,
+	LlmToolCall,
 } from "@/modules/assistant/interfaces/llm-provider.interface.js";
 import type {
 	ChatResponseDto,
@@ -23,6 +25,10 @@ import type { GoalDto } from "@/modules/goals/schemas/index.js";
 import type { IIncomeService } from "@/modules/income/interfaces/income.service.interface.js";
 
 const DRAFT_TTL_SECONDS = 300;
+// Histórico da conversa: sobrevive por 15min de inatividade, e carrega no
+// máximo as últimas 20 mensagens pro contexto não crescer sem limite.
+const HISTORY_TTL_SECONDS = 900;
+const MAX_HISTORY_MESSAGES = 20;
 
 const TOOLS: LlmTool[] = [
 	{
@@ -164,6 +170,10 @@ function draftKey(userId: string, draftId: string): string {
 	return `assistant:draft:${userId}:${draftId}`;
 }
 
+function historyKey(userId: string): string {
+	return `assistant:history:${userId}`;
+}
+
 function todayIso(): string {
 	return new Date().toISOString().split("T")[0];
 }
@@ -244,14 +254,41 @@ export class AssistantService implements IAssistantService {
 
 		const system = `Você é o assistente financeiro pessoal do usuário. Seja direto, natural e proativo: se notar um padrão de gasto alto numa categoria, comente e sugira algo. Hoje é ${todayIso()}.\n\n${summarizeExpenses(expenses)}\n\n${summarizeGoals(goals)}`;
 
-		const response = await this.llmProvider.complete(
-			system,
-			[{ role: "user", content: message }],
-			TOOLS,
+		const history =
+			(await this.cache.get<LlmMessage[]>(historyKey(userId))) ?? [];
+		const messages: LlmMessage[] = [
+			...history,
+			{ role: "user", content: message },
+		];
+
+		const response = await this.llmProvider.complete(system, messages, TOOLS);
+		const result = await this.resolveToolCall(
+			userId,
+			response.toolCall,
+			response.text,
+			goals,
 		);
 
-		const call = response.toolCall;
-		if (!call) return { reply: response.text ?? "" };
+		const updatedHistory = [
+			...messages,
+			{ role: "assistant" as const, content: result.reply },
+		].slice(-MAX_HISTORY_MESSAGES);
+		await this.cache.set(
+			historyKey(userId),
+			updatedHistory,
+			HISTORY_TTL_SECONDS,
+		);
+
+		return result;
+	}
+
+	private async resolveToolCall(
+		userId: string,
+		call: LlmToolCall | null,
+		text: string | null,
+		goals: GoalDto[],
+	): Promise<ChatResponseDto> {
+		if (!call) return { reply: text ?? "" };
 
 		if (call.name === "register_expense") {
 			const data = call.input as unknown as ExpenseDraftData;
@@ -259,7 +296,7 @@ export class AssistantService implements IAssistantService {
 				userId,
 				"create_expense",
 				data,
-				response.text ??
+				text ??
 					`Quer que eu salve: "${data.description}" de R$ ${data.amount} em ${data.category}?`,
 			);
 		}
@@ -270,7 +307,7 @@ export class AssistantService implements IAssistantService {
 				userId,
 				"create_income",
 				data,
-				response.text ??
+				text ??
 					`Quer que eu registre a receita "${data.description}" de R$ ${data.amount}?`,
 			);
 		}
@@ -298,7 +335,7 @@ export class AssistantService implements IAssistantService {
 				userId,
 				"create_goal",
 				data,
-				response.text ??
+				text ??
 					`Quer que eu crie a meta "${data.name}" de R$ ${data.targetAmount}?`,
 			);
 		}
@@ -365,7 +402,7 @@ export class AssistantService implements IAssistantService {
 			);
 		}
 
-		return { reply: response.text ?? "" };
+		return { reply: text ?? "" };
 	}
 
 	private goalNotFoundReply(goalName: string, goals: GoalDto[]): string {

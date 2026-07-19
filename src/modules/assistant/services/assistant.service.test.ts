@@ -99,7 +99,8 @@ describe("AssistantService", () => {
 
 		expect(result.draft?.action).toBe("create_expense");
 		expect(expensesService.createEntry).not.toHaveBeenCalled();
-		expect(cache.set).toHaveBeenCalledOnce();
+		// Um set pro rascunho, outro pra persistir o histórico da conversa.
+		expect(cache.set).toHaveBeenCalledTimes(2);
 	});
 
 	it("chat: deposit_goal resolve o nome da meta e gera um rascunho", async () => {
@@ -160,6 +161,55 @@ describe("AssistantService", () => {
 
 		expect(result.draft).toBeUndefined();
 		expect(result.reply).toContain("Viagem");
+	});
+
+	it("chat: mantém o histórico entre chamadas, passando-o pro provider na mensagem seguinte", async () => {
+		const cache = makeCache();
+		const complete = vi
+			.fn()
+			.mockResolvedValueOnce({
+				text: "Você tem 3 metas: Viagem, Carro e Casa. Qual delas?",
+				toolCall: null,
+			})
+			.mockResolvedValueOnce({
+				text: null,
+				toolCall: { name: "remove_goal", input: { goalName: "Carro" } },
+			});
+		const llmProvider: ILlmProvider = { complete };
+		const { expensesService, incomeService, goalsService } = makeServices({
+			goalsService: {
+				getData: vi.fn().mockResolvedValue({
+					summary: { activeCount: 3, completedCount: 0, totalSaved: 0 },
+					goals: [
+						goal,
+						{ ...goal, id: "goal-2", name: "Carro" },
+						{ ...goal, id: "goal-3", name: "Casa" },
+					],
+				}),
+			},
+		});
+
+		const service = new AssistantService({
+			llmProvider,
+			expensesService,
+			incomeService,
+			goalsService,
+			cache: cache as never,
+		});
+
+		await service.chat("user-1", "quero remover uma meta");
+		const result = await service.chat("user-1", "a do carro");
+
+		const secondCallMessages = complete.mock.calls[1][1];
+		expect(secondCallMessages).toEqual([
+			{ role: "user", content: "quero remover uma meta" },
+			{
+				role: "assistant",
+				content: "Você tem 3 metas: Viagem, Carro e Casa. Qual delas?",
+			},
+			{ role: "user", content: "a do carro" },
+		]);
+		expect(result.draft?.action).toBe("remove_goal");
 	});
 
 	it("confirmDraft: create_expense lê o rascunho do cache, cria a despesa e limpa o rascunho", async () => {
