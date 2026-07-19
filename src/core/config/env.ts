@@ -35,6 +35,11 @@ const envSchema = Type.Object({
 	// Opcional: se vazio, o assistente responde com erro claro ao ser chamado
 	ANTHROPIC_API_KEY: Type.Optional(Type.String()),
 	GEMINI_API_KEY: Type.Optional(Type.String()),
+	// Nomes de modelo configuráveis: providers descontinuam versões com o tempo
+	// (ex.: gemini-2.5-flash saiu de circulação), então isso evita ter que fazer
+	// deploy só pra trocar o modelo.
+	ANTHROPIC_MODEL: Type.String({ default: "claude-sonnet-5" }),
+	GEMINI_MODEL: Type.String({ default: "gemini-flash-latest" }),
 	// Adicione outras variáveis conforme o projeto crescer
 });
 

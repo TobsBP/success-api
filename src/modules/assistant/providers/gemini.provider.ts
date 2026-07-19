@@ -8,8 +8,6 @@ import type {
 	LlmTool,
 } from "@/modules/assistant/interfaces/llm-provider.interface.js";
 
-const MODEL = "gemini-2.5-flash";
-
 export class GeminiProvider implements ILlmProvider {
 	private client: GoogleGenAI | null;
 
@@ -33,7 +31,7 @@ export class GeminiProvider implements ILlmProvider {
 		}
 
 		const response = await this.client.models.generateContent({
-			model: MODEL,
+			model: env.GEMINI_MODEL,
 			contents: messages.map((m) => ({
 				role: m.role === "assistant" ? "model" : "user",
 				parts: [{ text: m.content }],

@@ -8,8 +8,6 @@ import type {
 	LlmTool,
 } from "@/modules/assistant/interfaces/llm-provider.interface.js";
 
-const MODEL = "claude-sonnet-5";
-
 export class ClaudeProvider implements ILlmProvider {
 	private client: Anthropic | null;
 
@@ -33,7 +31,7 @@ export class ClaudeProvider implements ILlmProvider {
 		}
 
 		const response = await this.client.messages.create({
-			model: MODEL,
+			model: env.ANTHROPIC_MODEL,
 			max_tokens: 1024,
 			system,
 			messages: messages.map((m) => ({ role: m.role, content: m.content })),
