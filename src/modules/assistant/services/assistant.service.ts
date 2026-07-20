@@ -252,7 +252,7 @@ export class AssistantService implements IAssistantService {
 		]);
 		const goals = goalsData.goals;
 
-		const system = `Você é o assistente financeiro pessoal do usuário. Seja direto, natural e proativo: se notar um padrão de gasto alto numa categoria, comente e sugira algo. Hoje é ${todayIso()}.\n\n${summarizeExpenses(expenses)}\n\n${summarizeGoals(goals)}`;
+		const system = `Você é o assistente financeiro pessoal do usuário. Seja direto, natural e proativo: se notar um padrão de gasto alto numa categoria, comente e sugira algo. Hoje é ${todayIso()}.\n\nQuando o usuário pedir uma ação em lote (ex: "remova todas as metas"), chame a tool para UMA única ação por resposta e avise no texto que fará as demais uma a uma após a confirmação. Nunca chame mais de uma tool na mesma resposta.\n\n${summarizeExpenses(expenses)}\n\n${summarizeGoals(goals)}`;
 
 		const history =
 			(await this.cache.get<LlmMessage[]>(historyKey(userId))) ?? [];
