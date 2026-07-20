@@ -7,6 +7,7 @@ import type {
 
 export interface IIncomeService {
 	getMonthData(userId: string, month: string): Promise<IncomeResponseDto>;
+	listAll(userId: string): Promise<IncomeEntryDto[]>;
 	createEntry(
 		userId: string,
 		data: CreateIncomeEntryBody,

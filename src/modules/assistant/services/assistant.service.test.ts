@@ -47,6 +47,7 @@ function makeServices(overrides?: {
 		...overrides?.expensesService,
 	} as unknown as IExpensesService;
 	const incomeService = {
+		listAll: vi.fn().mockResolvedValue([]),
 		createEntry: vi.fn(),
 		...overrides?.incomeService,
 	} as unknown as IIncomeService;

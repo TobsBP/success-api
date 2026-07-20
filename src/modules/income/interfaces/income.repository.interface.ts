@@ -5,6 +5,7 @@ import type {
 } from "@/modules/income/schemas/index.js";
 
 export interface IIncomeRepository {
+	findAll(userId: string): Promise<IncomeEntryDto[]>;
 	findByMonth(userId: string, month: string): Promise<IncomeEntryDto[]>;
 	findById(id: string): Promise<IncomeEntryDto | null>;
 	create(

@@ -38,6 +38,11 @@ export const IncomeDraftDataSchema = Type.Object({
 	amount: Type.Integer(),
 });
 
+export const RemoveIncomeDraftDataSchema = Type.Object({
+	incomeId: UuidSchema,
+	description: Type.String(),
+});
+
 export const CreateGoalDraftDataSchema = Type.Object({
 	name: Type.String(),
 	description: Type.Optional(Type.String()),
@@ -88,6 +93,11 @@ export const DraftSchema = Type.Union([
 	}),
 	Type.Object({
 		id: UuidSchema,
+		action: Type.Literal("remove_income"),
+		data: RemoveIncomeDraftDataSchema,
+	}),
+	Type.Object({
+		id: UuidSchema,
 		action: Type.Literal("create_goal"),
 		data: CreateGoalDraftDataSchema,
 	}),
@@ -125,6 +135,7 @@ export const ConfirmResponseSchema = Type.Object({
 export type ChatBody = Static<typeof ChatBodySchema>;
 export type ExpenseDraftData = Static<typeof ExpenseDraftDataSchema>;
 export type IncomeDraftData = Static<typeof IncomeDraftDataSchema>;
+export type RemoveIncomeDraftData = Static<typeof RemoveIncomeDraftDataSchema>;
 export type CreateGoalDraftData = Static<typeof CreateGoalDraftDataSchema>;
 export type EditGoalDraftData = Static<typeof EditGoalDraftDataSchema>;
 export type RemoveGoalDraftData = Static<typeof RemoveGoalDraftDataSchema>;

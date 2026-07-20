@@ -1,4 +1,4 @@
-import { and, eq, gte, lt } from "drizzle-orm";
+import { and, desc, eq, gte, lt } from "drizzle-orm";
 import type { Db } from "@/infra/db/client.js";
 import { income } from "@/infra/db/schema/index.js";
 import type { IIncomeRepository } from "@/modules/income/interfaces/income.repository.interface.js";
@@ -28,6 +28,15 @@ export class IncomeRepository implements IIncomeRepository {
 	private db: Db;
 	constructor({ db }: { db: Db }) {
 		this.db = db;
+	}
+
+	async findAll(userId: string): Promise<IncomeEntryDto[]> {
+		const rows = await this.db
+			.select()
+			.from(income)
+			.where(eq(income.userId, userId))
+			.orderBy(desc(income.date));
+		return rows.map((r) => this.toDto(r));
 	}
 
 	async findByMonth(userId: string, month: string): Promise<IncomeEntryDto[]> {

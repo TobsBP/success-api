@@ -18,11 +18,13 @@ import type {
 	ExpenseDraftData,
 	IncomeDraftData,
 	RemoveGoalDraftData,
+	RemoveIncomeDraftData,
 } from "@/modules/assistant/schemas/index.js";
 import type { IExpensesService } from "@/modules/expenses/interfaces/expenses.service.interface.js";
 import type { IGoalsService } from "@/modules/goals/interfaces/goals.service.interface.js";
 import type { GoalDto } from "@/modules/goals/schemas/index.js";
 import type { IIncomeService } from "@/modules/income/interfaces/income.service.interface.js";
+import type { IncomeEntryDto } from "@/modules/income/schemas/index.js";
 
 const DRAFT_TTL_SECONDS = 300;
 // Histórico da conversa: sobrevive por 15min de inatividade, e carrega no
@@ -81,13 +83,28 @@ const TOOLS: LlmTool[] = [
 					type: "string",
 					format: "date",
 					description:
-						"Data do recebimento (YYYY-MM-DD). Use hoje se não informado.",
+						'Data do recebimento (YYYY-MM-DD). Use hoje se não informado. Se o usuário disser "todo dia X" (recorrente), use o dia X do mês atual se ainda não passou, senão do próximo mês — nunca invente outro dia.',
 				},
 				description: { type: "string" },
 				category: { type: "string", description: "Ex.: Salário, Freelance." },
 				amount: { type: "integer", description: "Valor em reais." },
 			},
 			required: ["date", "description", "category", "amount"],
+		},
+	},
+	{
+		name: "remove_income",
+		description:
+			"Remove um lançamento de receita existente pela descrição (ex.: 'salário PJ', 'freela do site').",
+		inputSchema: {
+			type: "object",
+			properties: {
+				description: {
+					type: "string",
+					description: "Descrição ou trecho dela que identifica a receita.",
+				},
+			},
+			required: ["description"],
 		},
 	},
 	{
@@ -246,6 +263,18 @@ function findGoalByName(goals: GoalDto[], name: string): GoalDto | null {
 	return matches.length === 1 ? matches[0] : null;
 }
 
+/** Encontra a receita pela descrição (case-insensitive). Retorna null se não achar exatamente uma. */
+function findIncomeByDescription(
+	entries: IncomeEntryDto[],
+	description: string,
+): IncomeEntryDto | null {
+	const needle = description.trim().toLowerCase();
+	const matches = entries.filter((e) =>
+		e.description.toLowerCase().includes(needle),
+	);
+	return matches.length === 1 ? matches[0] : null;
+}
+
 export class AssistantService implements IAssistantService {
 	private llmProvider: ILlmProvider;
 	private expensesService: IExpensesService;
@@ -274,9 +303,10 @@ export class AssistantService implements IAssistantService {
 	}
 
 	async chat(userId: string, message: string): Promise<ChatResponseDto> {
-		const [expenses, goalsData] = await Promise.all([
+		const [expenses, goalsData, incomeEntries] = await Promise.all([
 			this.expensesService.listAll(userId),
 			this.goalsService.getData(userId),
+			this.incomeService.listAll(userId),
 		]);
 		const goals = goalsData.goals;
 
@@ -300,6 +330,7 @@ export class AssistantService implements IAssistantService {
 			response.toolCall,
 			response.text,
 			goals,
+			incomeEntries,
 		);
 
 		const updatedHistory = [
@@ -320,6 +351,7 @@ export class AssistantService implements IAssistantService {
 		call: LlmToolCall | null,
 		text: string | null,
 		goals: GoalDto[],
+		incomeEntries: IncomeEntryDto[],
 	): Promise<ChatResponseDto> {
 		if (!call) return { reply: text ?? "" };
 
@@ -342,6 +374,23 @@ export class AssistantService implements IAssistantService {
 				data,
 				text ??
 					`Quer que eu registre a receita "${data.description}" de R$ ${data.amount}?`,
+			);
+		}
+
+		if (call.name === "remove_income") {
+			const { description } = call.input as { description: string };
+			const entry = findIncomeByDescription(incomeEntries, description);
+			if (!entry)
+				return { reply: this.incomeNotFoundReply(description, incomeEntries) };
+			const data: RemoveIncomeDraftData = {
+				incomeId: entry.id,
+				description: entry.description,
+			};
+			return this.stageDraft(
+				userId,
+				"remove_income",
+				data,
+				`Quer que eu remova a receita "${entry.description}" de R$ ${entry.amount}?`,
 			);
 		}
 
@@ -446,6 +495,17 @@ export class AssistantService implements IAssistantService {
 		return `Não achei uma meta única chamada "${goalName}". Suas metas são: ${names}.`;
 	}
 
+	private incomeNotFoundReply(
+		description: string,
+		entries: IncomeEntryDto[],
+	): string {
+		if (entries.length === 0) {
+			return `Você ainda não tem nenhuma receita cadastrada, então não achei "${description}".`;
+		}
+		const descriptions = entries.map((e) => e.description).join(", ");
+		return `Não achei uma receita única com "${description}". Suas receitas são: ${descriptions}.`;
+	}
+
 	private async stageDraft(
 		userId: string,
 		action: Draft["action"],
@@ -489,6 +549,11 @@ export class AssistantService implements IAssistantService {
 				const data = staged.data as IncomeDraftData;
 				const result = await this.incomeService.createEntry(userId, data);
 				return { action: staged.action, result };
+			}
+			case "remove_income": {
+				const data = staged.data as RemoveIncomeDraftData;
+				await this.incomeService.removeEntry(userId, data.incomeId);
+				return { action: staged.action, result: { incomeId: data.incomeId } };
 			}
 			case "create_goal": {
 				const data = staged.data as CreateGoalDraftData;

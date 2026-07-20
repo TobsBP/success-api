@@ -157,6 +157,10 @@ export class IncomeService implements IIncomeService {
 		};
 	}
 
+	async listAll(userId: string): Promise<IncomeEntryDto[]> {
+		return this.repo.findAll(userId);
+	}
+
 	async createEntry(
 		userId: string,
 		data: CreateIncomeEntryBody,
