@@ -178,6 +178,34 @@ function todayIso(): string {
 	return new Date().toISOString().split("T")[0];
 }
 
+const LLM_RETRY_ATTEMPTS = 3;
+const LLM_RETRY_BASE_DELAY_MS = 300;
+
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Reenvia ao modelo em caso de falha transitória (modelo fora do ar, timeout, etc).
+ * Não reenvia AppError (ex.: API key não configurada), pois é um erro de config, não transitório.
+ */
+async function completeWithRetry(
+	llmProvider: ILlmProvider,
+	system: string,
+	messages: LlmMessage[],
+	tools: LlmTool[],
+): Promise<Awaited<ReturnType<ILlmProvider["complete"]>>> {
+	for (let attempt = 1; attempt <= LLM_RETRY_ATTEMPTS; attempt++) {
+		try {
+			return await llmProvider.complete(system, messages, tools);
+		} catch (err) {
+			if (err instanceof AppError || attempt === LLM_RETRY_ATTEMPTS) throw err;
+			await sleep(LLM_RETRY_BASE_DELAY_MS * 2 ** (attempt - 1));
+		}
+	}
+	throw new Error("unreachable");
+}
+
 /** Resumo de gastos por categoria dos últimos 30 dias, usado como contexto pro LLM. */
 function summarizeExpenses(
 	entries: { date: string; category: string; amount: number }[],
@@ -261,7 +289,12 @@ export class AssistantService implements IAssistantService {
 			{ role: "user", content: message },
 		];
 
-		const response = await this.llmProvider.complete(system, messages, TOOLS);
+		const response = await completeWithRetry(
+			this.llmProvider,
+			system,
+			messages,
+			TOOLS,
+		);
 		const result = await this.resolveToolCall(
 			userId,
 			response.toolCall,
