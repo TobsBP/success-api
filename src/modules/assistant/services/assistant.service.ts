@@ -15,6 +15,7 @@ import type {
 	DepositGoalDraftData,
 	Draft,
 	EditGoalDraftData,
+	EditIncomeDraftData,
 	ExpenseDraftData,
 	IncomeDraftData,
 	RemoveGoalDraftData,
@@ -103,6 +104,26 @@ const TOOLS: LlmTool[] = [
 					type: "string",
 					description: "Descrição ou trecho dela que identifica a receita.",
 				},
+			},
+			required: ["description"],
+		},
+	},
+	{
+		name: "edit_income",
+		description:
+			"Edita um lançamento de receita existente pela descrição. Só informe os campos que o usuário pediu pra mudar.",
+		inputSchema: {
+			type: "object",
+			properties: {
+				description: {
+					type: "string",
+					description:
+						"Descrição atual (ou trecho dela) que identifica a receita.",
+				},
+				date: { type: "string", format: "date", description: "Nova data." },
+				newDescription: { type: "string", description: "Nova descrição." },
+				category: { type: "string", description: "Nova categoria." },
+				amount: { type: "integer", description: "Novo valor em reais." },
 			},
 			required: ["description"],
 		},
@@ -394,6 +415,33 @@ export class AssistantService implements IAssistantService {
 			);
 		}
 
+		if (call.name === "edit_income") {
+			const { description, newDescription, ...rest } = call.input as {
+				description: string;
+				newDescription?: string;
+				date?: string;
+				category?: string;
+				amount?: number;
+			};
+			const entry = findIncomeByDescription(incomeEntries, description);
+			if (!entry)
+				return { reply: this.incomeNotFoundReply(description, incomeEntries) };
+			const data: EditIncomeDraftData = {
+				incomeId: entry.id,
+				description: entry.description,
+				changes: {
+					...rest,
+					...(newDescription && { description: newDescription }),
+				},
+			};
+			return this.stageDraft(
+				userId,
+				"edit_income",
+				data,
+				`Quer que eu atualize a receita "${entry.description}"?`,
+			);
+		}
+
 		if (call.name === "create_goal") {
 			const input = call.input as {
 				name: string;
@@ -554,6 +602,15 @@ export class AssistantService implements IAssistantService {
 				const data = staged.data as RemoveIncomeDraftData;
 				await this.incomeService.removeEntry(userId, data.incomeId);
 				return { action: staged.action, result: { incomeId: data.incomeId } };
+			}
+			case "edit_income": {
+				const data = staged.data as EditIncomeDraftData;
+				const result = await this.incomeService.updateEntry(
+					userId,
+					data.incomeId,
+					data.changes,
+				);
+				return { action: staged.action, result };
 			}
 			case "create_goal": {
 				const data = staged.data as CreateGoalDraftData;
